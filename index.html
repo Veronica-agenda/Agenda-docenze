@@ -204,6 +204,12 @@ tfoot td{font-weight:700;border-bottom:0}
 .login .card{width:100%;max-width:380px;padding:22px}
 .login h2{font-size:24px;margin-bottom:4px}
 .login .err{color:var(--bad);font-size:14px;min-height:20px;margin-bottom:6px}
+.corso-f select,.corso-f input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.corso-f input{margin-top:6px}
+.row > *{min-width:0}
+.fld input,.fld select{min-width:0;max-width:100%}
+.corso-f input[hidden]{display:none}
+.sede-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:60}
 @media (prefers-reduced-motion: no-preference){ .modal{animation:up .18s ease-out} @keyframes up{from{transform:translateY(16px);opacity:.6}} }
 </style>
@@ -649,6 +655,35 @@ function renderEbf(al){
   return h;
 }
 
+/* ---------- scelta corso (menu vero, funziona anche su iPhone) ---------- */
+function titoliList(){
+  return [...new Set([...TITOLI_BASE, ...lez().map(l => l.titolo), ...ebf().map(c => c.titolo), ...prev().flatMap(p => righe(p).map(r => r.corso)), ...par().map(x => x.corsoRich)].filter(Boolean))];
+}
+function corsoField(name, value, id, extraClass){
+  const list = titoliList(); value = value || "";
+  const altro = value && !list.includes(value);
+  return `<div class="corso-f"><select class="corso-sel" ${id?`id="${id}"`:""} aria-label="Corso">
+    <option value="" ${!value?"selected":""}>— scegli il corso —</option>
+    ${list.map(t => `<option value="${esc(t)}" ${t===value?"selected":""}>${esc(t)}</option>`).join("")}
+    <option value="__altro" ${altro?"selected":""}>Altro (scrivi a mano)…</option></select>
+    <input ${name?`name="${name}"`:""} class="corso-in ${extraClass||""}" value="${esc(value)}" placeholder="Scrivi il nome del corso" aria-label="Nome del corso" ${altro?"":"hidden"}></div>`;
+}
+document.addEventListener("change", e => {
+  const s = e.target;
+  if (!s.classList || !s.classList.contains("corso-sel")) return;
+  const inp = s.parentElement.querySelector(".corso-in");
+  if (s.value === "__altro"){ inp.hidden = false; inp.value = ""; inp.focus(); }
+  else { inp.hidden = true; inp.value = s.value; }
+});
+function sedeChips(inputId){
+  const sedi = [...new Set(["Roma","Passo Corese", ...lez().map(l => l.sede), ...ebf().map(c => c.sede)].filter(Boolean))].slice(0,8);
+  return `<div class="sede-chips">${sedi.map(x => `<button type="button" class="btn sm" data-sede="${esc(x)}" data-for="${inputId}">${esc(x)}</button>`).join("")}</div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-sede]"); if (!b) return;
+  const i = document.getElementById(b.dataset.for); if (i){ i.value = b.dataset.sede; i.dispatchEvent(new Event("input", {bubbles:true})); }
+});
+
 /* ---------- modali ---------- */
 let modalClose = null;
 function openModal(html, mount){
@@ -700,10 +735,10 @@ function lezModal(src){
       <div class="fld"><label for="l-fin">Fine</label><input id="l-fin" type="time" name="fin" value="${esc(l.fin||"")}"></div>
       <div class="fld"><label for="l-ore">Ore</label><input id="l-ore" type="number" step="0.25" min="0" name="ore" value="${esc(l.ore)}" inputmode="decimal"></div>
     </div>
-    <div class="fld"><label for="l-tit">Corso</label><input id="l-tit" name="titolo" list="dl-titoli" value="${esc(l.titolo||"")}" placeholder="Es. Formazione lavoratori - parte generale"></div>
+    <div class="fld"><label for="l-tit">Corso</label>${corsoField("titolo", l.titolo, "l-tit")}</div>
     <div class="lbl" style="margin-bottom:6px">Modalità</div>
     <div class="seg"><input type="radio" name="mod" id="m-on" value="online" ${l.mod!=="presenza"?"checked":""}><label for="m-on">Online</label><input type="radio" name="mod" id="m-pr" value="presenza" ${l.mod==="presenza"?"checked":""}><label for="m-pr">In presenza</label></div>
-    <div class="fld" id="w-sede"><label for="l-sede">Sede</label><input id="l-sede" name="sede" list="dl-sedi" value="${esc(l.sede||"")}" placeholder="Es. Passo Corese"></div>
+    <div class="fld" id="w-sede"><label for="l-sede">Sede</label><input id="l-sede" name="sede" value="${esc(l.sede||"")}" placeholder="Es. Passo Corese">${sedeChips("l-sede")}</div>
     <div class="row" id="w-az">
       <div class="fld"><label for="l-tar">Tariffa €/ora</label><input id="l-tar" type="number" step="0.5" min="0" name="tariffa" value="${esc(l.tariffa)}" inputmode="decimal"></div>
       <div class="fld"><label for="l-cli">Cliente finale (facoltativo)</label><input id="l-cli" name="cliente" value="${esc(l.cliente||"")}"></div>
@@ -826,9 +861,9 @@ function prevModal(p){
     const box = m.querySelector("#p-righe");
     const addRiga = (r={corso:"", n:""}) => {
       const d = document.createElement("div");
-      d.className = "riga"; d.style.cssText = "display:grid;grid-template-columns:1fr 90px 36px;gap:6px";
+      d.className = "riga"; d.style.cssText = "display:grid;grid-template-columns:1fr 80px 36px;gap:6px;align-items:start";
       const i = box.children.length;
-      d.innerHTML = `<input aria-label="Corso" list="dl-titoli" class="r-c" value="${esc(r.corso)}" placeholder="Es. Formazione lavoratori - parte generale" style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)"><input aria-label="Numero lavoratori" class="r-n" type="number" min="0" inputmode="numeric" value="${esc(r.n)}" placeholder="N." style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)"><button type="button" class="iconbtn" aria-label="Togli corso">×</button>`;
+      d.innerHTML = `${corsoField("", r.corso, "", "r-c")}<input aria-label="Numero lavoratori" class="r-n" type="number" min="0" inputmode="numeric" value="${esc(r.n)}" placeholder="N." style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)"><button type="button" class="iconbtn" aria-label="Togli corso">×</button>`;
       d.querySelector("button").addEventListener("click", () => d.remove());
       box.appendChild(d);
     };
@@ -869,7 +904,7 @@ function addParModal(prevId, ebfId){
     <div id="ai-box"></div>
     ${c ? `<input type="hidden" name="corso" value="${esc(c.titolo||"")}">
       <div class="fld"><label for="ap-p">Cliente di papà (facoltativo)</label><select id="ap-p" name="prev"><option value="">—</option>${prev().filter(x => prevStato(x).key !== "chiuso").map(x => `<option value="${x.id}">${esc(x.cliente)}</option>`).join("")}</select></div>`
-      : `<div class="fld"><label for="ap-c">Corso</label>${rr.length ? `<select id="ap-c" name="corso">${rr.map(r => `<option value="${esc(r.corso)}">${esc(r.corso)} (${esc(r.n)} lavoratori)</option>`).join("")}</select>` : `<input id="ap-c" name="corso" list="dl-titoli" placeholder="Es. Formazione lavoratori - parte generale">`}</div>`}
+      : `<div class="fld"><label for="ap-c">Corso</label>${rr.length ? `<select id="ap-c" name="corso">${rr.map(r => `<option value="${esc(r.corso)}">${esc(r.corso)} (${esc(r.n)} lavoratori)</option>`).join("")}</select>` : corsoField("corso", "", "ap-c")}</div>`}
     <div class="hint">Uno per riga, campi separati da punto e virgola:<br><b>Nome; Cognome; Luogo di nascita; Data di nascita; Codice fiscale</b><br>Il codice fiscale è facoltativo. Puoi incollare anche righe copiate da Excel.</div>
     <div class="fld"><label for="ap-l">Elenco</label><textarea id="ap-l" name="lista" style="min-height:160px" placeholder="Mario; Rossi; Roma; 01/01/1980&#10;Laura; Bianchi; Rieti; 15/03/1992; BNCLRA92C55H282X"></textarea></div>
     <div class="mfoot"><div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Aggiungi</button></div></form>`,
@@ -993,7 +1028,7 @@ function parModal(x){
     <div class="row"><div class="fld"><label for="x-ln">Luogo di nascita</label><input id="x-ln" name="luogoNascita" value="${esc(x.luogoNascita||"")}"></div>
     <div class="fld"><label for="x-dn">Data di nascita</label><input id="x-dn" type="date" name="dataNascita" value="${esc(x.dataNascita||"")}"></div></div>
     <div class="fld"><label for="x-cf">Codice fiscale (facoltativo)</label><input id="x-cf" name="cf" value="${esc(x.cf||"")}" style="text-transform:uppercase"></div>
-    <div class="fld"><label for="x-cr">Corso richiesto</label><input id="x-cr" name="corsoRich" list="dl-titoli" value="${esc(x.corsoRich||"")}"></div>
+    <div class="fld"><label for="x-cr">Corso richiesto</label>${corsoField("corsoRich", x.corsoRich, "x-cr")}</div>
     <div class="row">
       <div class="fld"><label for="x-p">Cliente di papà (facoltativo)</label><select id="x-p" name="prev"><option value="">—</option>${prev().map(p => `<option value="${p.id}" ${x.prev===p.id?"selected":""}>${esc(p.cliente)}</option>`).join("")}</select></div>
       <div class="fld"><label for="x-e">Corso EBAFOS</label><select id="x-e" name="ebf"><option value="">Da smistare</option>${ebf().filter(c => c.stato==="aperto" || c.id===x.ebf).map(c => `<option value="${c.id}" ${x.ebf===c.id?"selected":""}>${esc(c.titolo)}</option>`).join("")}</select></div>
@@ -1013,7 +1048,7 @@ function parModal(x){
 function ebfModal(c){
   c = c || {titolo:"", codice:"", ini:"", fin:"", ore:"", mod:"online", sede:"", max:"", stato:"aperto"};
   openModal(`<form><h2>${c.id?"Corso EBAFOS":"Nuovo corso EBAFOS"}</h2>
-    <div class="fld"><label for="e-t">Titolo / tipologia</label><input id="e-t" name="titolo" list="dl-titoli" value="${esc(c.titolo)}" required></div>
+    <div class="fld"><label for="e-t">Titolo / tipologia</label>${corsoField("titolo", c.titolo, "e-t")}</div>
     <div class="row">
       <div class="fld"><label for="e-c">ID corso sul portale</label><input id="e-c" name="codice" value="${esc(c.codice||"")}"></div>
       <div class="fld"><label for="e-o">Ore</label><input id="e-o" type="number" step="0.5" name="ore" value="${esc(c.ore||"")}"></div>
@@ -1025,7 +1060,7 @@ function ebfModal(c){
     </div>
     <div class="lbl" style="margin-bottom:6px">Modalità</div>
     <div class="seg"><input type="radio" name="mod" id="em-on" value="online" ${c.mod!=="presenza"?"checked":""}><label for="em-on">Online</label><input type="radio" name="mod" id="em-pr" value="presenza" ${c.mod==="presenza"?"checked":""}><label for="em-pr">In presenza</label></div>
-    <div class="fld"><label for="e-s">Sede</label><input id="e-s" name="sede" list="dl-sedi" value="${esc(c.sede||"")}"></div>
+    <div class="fld"><label for="e-s">Sede</label><input id="e-s" name="sede" value="${esc(c.sede||"")}">${sedeChips("e-s")}</div>
     <div class="lbl" style="margin-bottom:6px">Stato sul portale</div>
     <div class="seg"><input type="radio" name="stato" id="es-a" value="aperto" ${c.stato==="aperto"?"checked":""}><label for="es-a">Aperto</label><input type="radio" name="stato" id="es-c" value="chiuso" ${c.stato!=="aperto"?"checked":""}><label for="es-c">Chiuso</label></div>
     <div class="fld"><label for="e-n">Note</label><textarea id="e-n" name="note">${esc(c.note||"")}</textarea></div>
@@ -1033,6 +1068,7 @@ function ebfModal(c){
   (m, close) => {
     m.querySelector("form").addEventListener("submit", e => {
       e.preventDefault(); const v = fd(e.target);
+      if (!v.titolo){ toast("Scegli il corso."); return; }
       save(c.id, {k:"ebf", titolo:v.titolo, codice:v.codice, ore:num(v.ore)||"", max:v.max, ini:v.ini, fin:v.fin||v.ini, mod:v.mod, sede:v.sede, stato:v.stato, note:v.note});
       close(); toast("Corso salvato");
     });
