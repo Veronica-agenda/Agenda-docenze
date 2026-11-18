@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agenda Docenze</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Docenze">
+<meta name="theme-color" content="#22324a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: app a schede (Calendario · Fatture · Papà · EBAFOS); nav in alto su desktop, in basso su telefono */
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --surface-2:#f8f9fb; --ink:#1a2230; --muted:#5f6b7b; --line:#dfe3ea;
+  --accent:#22324a; --accent-ink:#ffffff;
+  --c-scilla:#8b4cc6; --c-bioinvent:#2e6bd3; --c-cmb:#dd7417; --c-papa:#2b9a5a;
+  --ok:#23804a; --warn:#b77800; --bad:#c0392b; --info:#2e6bd3;
+  --ok-bg:#e5f4eb; --warn-bg:#fdf1d8; --bad-bg:#fbe5e2; --info-bg:#e6eefb;
+  --font-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r:10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161d; --surface:#1a2029; --surface-2:#202733; --ink:#e7ebf1; --muted:#9aa5b4; --line:#2d3644;
+    --accent:#c9d6ea; --accent-ink:#12161d;
+    --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-papa:#4cc07e;
+    --ok:#55c483; --warn:#e6ac3a; --bad:#ef6b5c; --info:#6c9ff0;
+    --ok-bg:#16301f; --warn-bg:#332811; --bad-bg:#3a1c19; --info-bg:#172540;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161d; --surface:#1a2029; --surface-2:#202733; --ink:#e7ebf1; --muted:#9aa5b4; --line:#2d3644;
+  --accent:#c9d6ea; --accent-ink:#12161d;
+  --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-papa:#4cc07e;
+  --ok:#55c483; --warn:#e6ac3a; --bad:#ef6b5c; --info:#6c9ff0;
+  --ok-bg:#16301f; --warn-bg:#332811; --bad-bg:#3a1c19; --info-bg:#172540;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--c-bioinvent);outline-offset:2px}
+
+header.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 10px) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+  display:flex;align-items:center;gap:16px}
+header.top h1{font-size:20px;white-space:nowrap}
+.sync{font-size:12px;color:var(--muted);white-space:nowrap}
+.spacer{flex:1}
+nav.tabs{display:flex;gap:4px}
+nav.tabs a{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;text-decoration:none;color:var(--muted);font-weight:600;font-size:14px;position:relative}
+nav.tabs a[aria-current="page"]{background:var(--surface-2);color:var(--ink)}
+nav.tabs svg{width:18px;height:18px}
+.badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn svg{width:18px;height:18px}
+
+main{max-width:1180px;margin:0 auto;padding:16px max(16px, env(safe-area-inset-left)) 120px}
+.banner{padding:10px 14px;border-radius:var(--r);background:var(--warn-bg);color:var(--ink);font-size:14px;margin-bottom:12px}
+
+@media (max-width:760px){
+  header.top{gap:10px}
+  header.top h1{font-size:18px}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+    justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:30}
+  nav.tabs a{flex-direction:column;gap:2px;font-size:11px;padding:6px 8px;flex:1;text-align:center}
+  nav.tabs a .badge{position:absolute;top:2px;right:calc(50% - 22px)}
+  .sync{display:none}
+}
+
+/* elementi comuni */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.section{display:grid;gap:12px;margin-bottom:22px}
+.section-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.section-h h2{font-size:18px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.pill.neutral{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r);font-size:14px}
+
+/* avvisi */
+.alerts{display:grid;gap:6px}
+.alert{display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:8px;border-left:4px solid;background:var(--surface);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:14px;text-decoration:none;color:inherit}
+.alert.warn{border-left-color:var(--warn)} .alert.bad{border-left-color:var(--bad)} .alert.info{border-left-color:var(--info)}
+.alert .t{font-weight:600} .alert .s{color:var(--muted);font-size:13px}
+.alert .go{margin-left:auto;color:var(--muted);font-size:13px;white-space:nowrap}
+
+/* calendario */
+.calbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.calbar h2{font-size:22px;min-width:170px}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chipf{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px 5px 9px;font-size:13px;font-weight:600;cursor:pointer}
+.chipf[aria-pressed="false"]{opacity:.45}
+.chipf .h{color:var(--muted);font-weight:500}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--line);gap:1px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cal .wd{background:var(--surface-2);font-size:12px;font-weight:700;color:var(--muted);padding:6px 8px;text-transform:uppercase;letter-spacing:.04em}
+.cal .day{background:var(--surface);min-height:96px;padding:5px;cursor:pointer;display:flex;flex-direction:column;gap:3px;border:0;text-align:left;font:inherit;color:inherit}
+.cal .day.out{background:var(--surface-2);color:var(--muted)}
+.cal .day.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.cal .day .n{font-size:13px;font-weight:600;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%}
+.cal .day.today .n{background:var(--accent);color:var(--accent-ink)}
+.ev{display:block;font-size:12px;line-height:1.25;padding:2px 5px;border-radius:4px;border-left:3px solid var(--c);background:color-mix(in srgb, var(--c) 14%, transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:11px;color:var(--muted);padding-left:4px}
+@media (max-width:640px){
+  .cal .day{min-height:58px;padding:3px}
+  .cal .wd{padding:5px 3px;text-align:center;font-size:11px}
+  .ev{font-size:0;height:5px;padding:0;border-left:0;background:var(--c);border-radius:3px}
+  .more{font-size:10px}
+}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+@media (max-width:980px){.split{grid-template-columns:1fr}}
+.agenda{display:grid;gap:8px}
+.agenda h3{font-size:16px}
+.lrow{display:flex;gap:10px;align-items:stretch;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer;text-align:left;width:100%}
+.lrow:hover{background:var(--surface-2)}
+.lrow .bar{width:4px;border-radius:2px;background:var(--c);flex:none}
+.lrow .b{flex:1;min-width:0;display:grid;gap:2px}
+.lrow .tt{font-weight:600}
+.lrow .meta{font-size:13px;color:var(--muted)}
+.lrow .r{text-align:right;font-size:13px;white-space:nowrap}
+.fab{position:fixed;right:max(18px, env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;z-index:25;display:flex;align-items:center;justify-content:center}
+.fab svg{width:26px;height:26px}
+@media (min-width:761px){.fab{bottom:28px}}
+
+/* tessere ore */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--c, var(--accent));border-radius:var(--r);padding:10px 12px}
+.tile .l{font-size:13px;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--font-display);font-size:24px;font-weight:700}
+.tile .s{font-size:13px;color:var(--muted)}
+
+/* tabelle */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+td.r,th.r{text-align:right}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
+tfoot td{font-weight:700;border-bottom:0}
+.azcard{border-left:4px solid var(--c)}
+.azcard-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.azcard-h h3{font-size:17px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* passi preventivo */
+.steps{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.step{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.step.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.step.now{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+@media (max-width:400px){.grid2{grid-template-columns:1fr}}
+.plist{display:grid;gap:4px;margin-top:8px}
+.prow{display:flex;gap:8px;align-items:center;font-size:14px;padding:5px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.prow .nm{flex:1;min-width:140px}
+.prow select{max-width:100%}
+
+/* modale */
+.backdrop{position:fixed;inset:0;background:rgba(10,14,20,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+@media (min-width:700px){.backdrop{align-items:center}}
+.modal{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:700px){.modal{border-radius:16px}}
+.modal h2{font-size:20px;margin-bottom:12px}
+.fld{display:grid;gap:4px;margin-bottom:10px}
+.fld label,.lbl{font-size:13px;font-weight:600;color:var(--muted)}
+.fld input,.fld select,.fld textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.fld textarea{min-height:70px;resize:vertical}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;cursor:pointer;font-weight:600;font-size:14px;background:var(--surface)}
+.seg input:checked + label{border-color:var(--c, var(--accent));background:color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface));box-shadow:inset 0 0 0 1px var(--c, var(--accent))}
+.seg input:focus-visible + label{outline:2px solid var(--c-bioinvent);outline-offset:2px}
+.mfoot{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.mfoot .spacer{flex:1}
+.hint{font-size:13px;color:var(--muted);margin:-4px 0 10px}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:10px}
+.login{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+.login[hidden]{display:none}
+.login .card{width:100%;max-width:380px;padding:22px}
+.login h2{font-size:24px;margin-bottom:4px}
+.login .err{color:var(--bad);font-size:14px;min-height:20px;margin-bottom:6px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:60}
+@media (prefers-reduced-motion: no-preference){ .modal{animation:up .18s ease-out} @keyframes up{from{transform:translateY(16px);opacity:.6}} }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Agenda Docenze</h1>
+  <span class="sync" id="sync">Caricamento…</span>
+  <div class="spacer"></div>
+  <nav class="tabs" id="nav"></nav>
+  <button class="iconbtn" id="btn-settings" title="Tariffe e impostazioni" aria-label="Tariffe e impostazioni">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </button>
+</header>
+<main id="main"></main>
+<button class="fab" id="fab" aria-label="Aggiungi docenza" title="Aggiungi docenza">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+<div id="modal-root"></div>
+<div class="login" id="login" hidden>
+  <form class="card" id="f-login">
+    <h2>Agenda Docenze</h2>
+    <p class="muted small" style="margin:0 0 14px">Accedi per vedere e sincronizzare le tue docenze su tutti i dispositivi.</p>
+    <div class="fld"><label for="lg-e">Email</label><input id="lg-e" name="email" type="email" autocomplete="username" required></div>
+    <div class="fld"><label for="lg-p">Password</label><input id="lg-p" name="password" type="password" autocomplete="current-password" minlength="6" required></div>
+    <div class="err" id="lg-err" role="alert"></div>
+    <div class="actions"><button class="btn primary" id="lg-in">Accedi</button><button type="button" class="btn" id="lg-new">Crea account (prima volta)</button></div>
+    <button type="button" class="btn sm" id="lg-reset" style="margin-top:10px;border:0;padding-left:0;color:var(--muted)">Password dimenticata?</button>
+  </form>
+</div>
+<datalist id="dl-titoli"></datalist>
+<datalist id="dl-sedi"></datalist>
+
+<script type="module">
+import { initializeApp, initializeAuth, getAuth, indexedDBLocalPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot } from "./firebase.js";
+import { firebaseConfig } from "./firebase-config.js";
+/* ---------- costanti ---------- */
+const AZ_BASE = {
+  scilla:   {nome:"Scilla",    full:"Scilla Società Benefit", c:"var(--c-scilla)",    tariffa:25, tariffaPres:25, fatt:"docenza",   gg:null},
+  bioinvent:{nome:"BioInvent", full:"BioInvent SRL",          c:"var(--c-bioinvent)", tariffa:25, tariffaPres:25, fatt:"mensile",   gg:10},
+  cmb:      {nome:"CMB",       full:"CMB Consulting",         c:"var(--c-cmb)",       tariffa:30, tariffaPres:40, fatt:"mensile",   gg:30},
+  papa:     {nome:"Con papà",  full:"Clienti con papà",       c:"var(--c-papa)",      tariffa:0,  tariffaPres:0,  fatt:"preventivo",gg:null}
+};
+const AZ_KEYS = ["scilla","bioinvent","cmb","papa"];
+const FATT_AZ = ["scilla","bioinvent","cmb"];
+const TITOLI_BASE = ["Formazione lavoratori - parte generale","Formazione specifica - rischio basso","Formazione specifica - rischio medio","Formazione specifica - rischio alto","RLS","Aggiornamento RLS","Preposti","Aggiornamento preposti","Datore di lavoro","RSPP datore di lavoro"];
+const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+const GGS = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+const GGL = ["lunedì","martedì","mercoledì","giovedì","venerdì","sabato","domenica"];
+const TABS = [
+  {id:"calendario", nome:"Calendario", ico:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'},
+  {id:"fatture",    nome:"Fatture",    ico:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>'},
+  {id:"papa",       nome:"Papà",       ico:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.8.3 5 2.6 5 5.8"/></svg>'},
+  {id:"ebafos",     nome:"EBAFOS",     ico:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-5 9 5-9 5z"/><path d="M7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5"/></svg>'}
+];
+
+/* ---------- utilità ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d||1); };
+const addDays = (s,n) => { const d = parse(s); d.setDate(d.getDate()+n); return iso(d); };
+const today = () => iso(new Date());
+const ym = s => s.slice(0,7);
+const addMonths = (m,n) => { const d = parse(m+"-01"); d.setMonth(d.getMonth()+n); return iso(d).slice(0,7); };
+const lastDay = m => { const d = parse(m+"-01"); d.setMonth(d.getMonth()+1); d.setDate(0); return iso(d); };
+const daysBetween = (a,b) => Math.round((parse(b)-parse(a))/86400000);
+const meseNome = m => { const [y,mm] = m.split("-").map(Number); return `${MESI[mm-1]} ${y}`; };
+const fmtD = s => s ? `${pad(parse(s).getDate())}/${pad(parse(s).getMonth()+1)}/${parse(s).getFullYear()}` : "";
+const fmtDay = s => { const d = parse(s); return `${GGL[(d.getDay()+6)%7]} ${d.getDate()} ${MESI[d.getMonth()]}`; };
+const fmtDshort = s => { const d = parse(s); return `${GGS[(d.getDay()+6)%7]} ${d.getDate()}/${pad(d.getMonth()+1)}`; };
+const EUR = new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"});
+const eur = n => EUR.format(n || 0);
+const oreF = n => (Math.round((n||0)*100)/100).toLocaleString("it-IT") + " h";
+const diffH = (a,b) => { if(!a||!b) return 0; const [h1,m1]=a.split(":").map(Number), [h2,m2]=b.split(":").map(Number); return Math.max(0,(h2*60+m2-h1*60-m1)/60); };
+const num = v => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(n) ? n : 0; };
+const plural = (n, s, p) => `${n} ${n===1?s:p}`;
+const pname = x => [x.cognome, x.nome].filter(Boolean).join(" ") || "Senza nome";
+const parseDataIt = v => { v = (v||"").trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/); if (!m) return ""; let y = +m[3]; if (y < 100) y += y > 30 ? 1900 : 2000; return `${y}-${pad(+m[2])}-${pad(+m[1])}`; };
+const datiMancanti = x => !x.nome || !x.cognome || !x.luogoNascita || !x.dataNascita;
+const righe = p => Array.isArray(p.righe) && p.righe.length ? p.righe : (p.corsi ? [] : []);
+
+/* ---------- stato ---------- */
+let items = new Map();
+let col = null;           // collezione privata nel database
+let mode = "loading";     // loading | cloud | local
+const ui = {
+  tab: "calendario",
+  calMonth: today().slice(0,7),
+  selDay: today(),
+  fattMonth: today().slice(0,7),
+  filters: new Set(AZ_KEYS),
+  fattShowAll: false,
+  ebfShowClosed: false,
+  papaShowClosed: false
+};
+const byKind = k => [...items.values()].filter(x => x.k === k);
+const lez = () => byKind("lez");
+const fat = () => byKind("fat");
+const prev = () => byKind("prev");
+const ebf = () => byKind("ebf");
+const par = () => byKind("par");
+function cfg(){
+  const s = items.get("settings");
+  const out = {};
+  for (const k of AZ_KEYS){
+    out[k] = {...AZ_BASE[k], ...((s && s.az && s.az[k]) || {})};
+  }
+  return out;
+}
+const lezImporto = l => l.az === "papa" ? 0 : num(l.ore) * num(l.tariffa);
+const sortLez = (a,b) => (a.data+(a.ini||"")).localeCompare(b.data+(b.ini||""));
+
+/* ---------- salvataggio (funziona anche offline: Firebase tiene una copia locale e sincronizza dopo) ---------- */
+let pendingWrites = false;
+function newId(prefix){
+  if (col) { try { return doc(col).id; } catch(e){} }
+  return (prefix||"x") + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+function strip(o){ const c = {...o}; delete c.id; return c; }
+function writeErr(e){
+  toast(e && e.code === "permission-denied" ? "Accesso negato: esci e rientra nell'app." : "Salvataggio non riuscito. Riprova.");
+}
+function save(id, data){
+  id = id || newId(data.k);
+  const body = JSON.parse(JSON.stringify(strip(data)));
+  items.set(id, {id, ...body}); render();
+  if (col) setDoc(doc(col, id), body).catch(writeErr);
+  return Promise.resolve(id);
+}
+function patch(id, part){ const cur = items.get(id); if(!cur) return Promise.resolve(); return save(id, {...cur, ...part}); }
+function del(id){
+  items.delete(id); render();
+  if (col) deleteDoc(doc(col, id)).catch(writeErr);
+  return Promise.resolve();
+}
+async function seq(list, fn){ for (const x of list) await fn(x); }
+
+/* ---------- avvisi ---------- */
+function alerts(){
+  const t = today(), C = cfg(), out = [];
+  for (const az of FATT_AZ.filter(a => C[a].fatt === "mensile")){
+    const pend = lez().filter(l => l.az === az && !l.fat && l.data <= t);
+    const months = [...new Set(pend.map(l => ym(l.data)))].sort();
+    for (const m of months){
+      const ls = pend.filter(l => ym(l.data) === m);
+      const h = ls.reduce((s,l)=>s+num(l.ore),0), e = ls.reduce((s,l)=>s+lezImporto(l),0);
+      const last = lastDay(m);
+      if (t > last) out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${C[az].full} di ${meseNome(m)}`, s:`${plural(ls.length,"docenza","docenze")} · ${oreF(h)} · ${eur(e)}`, mese:m});
+      else if (daysBetween(t,last) <= 3) out.push({tab:"fatture", lvl:"info", t:`Fine mese: prepara la fattura ${C[az].full}`, s:`Finora ${oreF(h)} · ${eur(e)} a ${meseNome(m)}`, mese:m});
+    }
+  }
+  for (const az of FATT_AZ.filter(a => C[a].fatt === "docenza")){
+    lez().filter(l => l.az === az && !l.fat && l.data <= t).sort(sortLez).forEach(l => {
+      out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${C[az].full} per la docenza del ${fmtD(l.data)}`, s:`${l.titolo||"Docenza"} · ${oreF(l.ore)} · ${eur(lezImporto(l))}`, mese:ym(l.data)});
+    });
+  }
+  fat().filter(f => !f.pagata && f.scad).forEach(f => {
+    const d = daysBetween(t, f.scad), n = C[f.az] ? C[f.az].full : "";
+    if (d < 0) out.push({tab:"fatture", lvl:"bad", t:`Pagamento in ritardo: fattura ${f.numero?("n. "+f.numero+" "):""}${n}`, s:`${eur(f.importo)} · scaduta il ${fmtD(f.scad)} (${plural(-d,"giorno","giorni")} fa)`});
+    else if (d <= 5) out.push({tab:"fatture", lvl:"info", t:`Pagamento atteso: fattura ${f.numero?("n. "+f.numero+" "):""}${n}`, s:`${eur(f.importo)} · entro il ${fmtD(f.scad)}`});
+  });
+  prev().forEach(p => {
+    const st = prevStato(p);
+    if (st.key === "dafatturare") out.push({tab:"papa", lvl:"warn", t:`Emetti la fattura a ${p.cliente||"cliente"}`, s:`${num(p.importo)?eur(p.importo)+" · ":""}corsi conclusi`});
+    if (st.key === "attestati") out.push({tab:"papa", lvl:"warn", t:`Emetti gli attestati per ${p.cliente||"cliente"}`, s:`Fattura saldata il ${fmtD(p.saldato)}`});
+  });
+  const ds = par().filter(p => !p.ebf || !items.get(p.ebf));
+  if (ds.length) out.push({tab:"ebafos", lvl:"info", t:`${plural(ds.length,"partecipante da smistare","partecipanti da smistare")} nei corsi EBAFOS`, s:"Assegnali a un corso aperto sul portale"});
+  ebf().forEach(c => {
+    if (c.stato === "aperto" && c.fin && c.fin < t) out.push({tab:"ebafos", lvl:"warn", t:`Chiudi il corso EBAFOS "${c.titolo||"senza titolo"}"`, s:`Terminato il ${fmtD(c.fin)}`});
+    if (c.stato === "chiuso"){
+      const ps = par().filter(p => p.ebf === c.id && !p.attestato);
+      if (ps.length) out.push({tab:"ebafos", lvl:"warn", t:`Attestati da emettere: "${c.titolo||"corso"}"`, s:plural(ps.length,"partecipante","partecipanti") + (ps.some(datiMancanti) ? " · mancano dati anagrafici di qualcuno" : "")});
+    }
+  });
+  const ord = {bad:0, warn:1, info:2};
+  return out.sort((a,b) => ord[a.lvl]-ord[b.lvl]);
+}
+function alertsHtml(list, withTab){
+  if (!list.length) return "";
+  return `<div class="alerts">${list.map(a => `<a class="alert ${a.lvl}" href="#${a.tab}" ${a.mese?`data-act="gomese" data-m="${a.mese}"`:""}><span><div class="t">${esc(a.t)}</div><div class="s">${esc(a.s||"")}</div></span>${withTab?`<span class="go">${esc(TABS.find(x=>x.id===a.tab).nome)} →</span>`:""}</a>`).join("")}</div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const al = alerts();
+  const cnt = id => al.filter(a => a.tab === id && a.lvl !== "info").length;
+  $("#nav").innerHTML = TABS.map(t => `<a href="#${t.id}" ${ui.tab===t.id?'aria-current="page"':""}>${t.ico}<span>${t.nome}</span>${cnt(t.id)?`<span class="badge">${cnt(t.id)}</span>`:""}</a>`).join("");
+  const sync = $("#sync");
+  sync.textContent = mode === "local" ? "Non configurata" : mode === "loading" ? "Caricamento…" : !navigator.onLine ? "Offline · sincronizzo al ritorno della rete" : pendingWrites ? "Sincronizzazione…" : "Sincronizzato";
+  let h = "";
+  if (mode === "local") h += `<div class="banner">App non ancora collegata al database: manca la configurazione di Firebase. I dati inseriti ora non vengono salvati.</div>`;
+  if (mode !== "local" && !navigator.onLine) h += `<div class="banner" style="background:var(--info-bg)">Sei offline: puoi continuare a lavorare, le modifiche si sincronizzano da sole quando torna la connessione.</div>`;
+  if (ui.tab === "calendario") h += renderCal(al);
+  else if (ui.tab === "fatture") h += renderFatt(al);
+  else if (ui.tab === "papa") h += renderPapa(al);
+  else h += renderEbf(al);
+  $("#main").innerHTML = h;
+  $("#fab").style.display = ui.tab === "calendario" || ui.tab === "fatture" ? "" : "none";
+  updateDatalists();
+}
+
+function updateDatalists(){
+  const tit = [...new Set([...lez().map(l => l.titolo).filter(Boolean), ...TITOLI_BASE])];
+  $("#dl-titoli").innerHTML = tit.map(t => `<option value="${esc(t)}">`).join("");
+  const sedi = [...new Set(["Online","Roma","Passo Corese", ...lez().map(l => l.sede).filter(Boolean)])];
+  $("#dl-sedi").innerHTML = sedi.map(t => `<option value="${esc(t)}">`).join("");
+}
+
+function lezRow(l, opts={}){
+  const C = cfg(), a = C[l.az] || C.scilla;
+  const p = l.prev && items.get(l.prev);
+  const meta = [l.ini && l.fin ? `${l.ini}–${l.fin}` : "", oreF(l.ore), l.mod === "presenza" ? (l.sede || "In presenza") : "Online", l.cliente || (p && p.cliente) || ""].filter(Boolean).join(" · ");
+  return `<button class="lrow" style="--c:${a.c}" data-act="editlez" data-id="${l.id}">
+    <span class="bar"></span>
+    <span class="b"><span class="tt">${esc(l.titolo || "Docenza")}</span><span class="meta">${opts.date?esc(fmtDshort(l.data))+" · ":""}${esc(meta)}</span></span>
+    <span class="r"><div style="font-weight:600">${esc(a.nome)}</div>${l.az!=="papa"?`<div class="muted num">${eur(lezImporto(l))}</div>`:""}${l.fat?`<span class="pill ok">fatturata</span>`:""}</span>
+  </button>`;
+}
+
+function renderCal(al){
+  const C = cfg();
+  const [y,m] = ui.calMonth.split("-").map(Number);
+  const first = new Date(y, m-1, 1);
+  const off = (first.getDay()+6)%7;
+  const dim = new Date(y, m, 0).getDate();
+  const weeks = Math.ceil((off+dim)/7);
+  const start = addDays(iso(first), -off);
+  const t = today();
+  const vis = lez().filter(l => ui.filters.has(l.az));
+  const byDay = {};
+  vis.forEach(l => (byDay[l.data] = byDay[l.data] || []).push(l));
+  Object.values(byDay).forEach(a => a.sort(sortLez));
+  const mesLez = lez().filter(l => ym(l.data) === ui.calMonth);
+
+  let h = "";
+  if (al.length){
+    const top = al.filter(a => a.lvl !== "info").slice(0,3);
+    const rest = al.length - top.length;
+    if (top.length) h += `<div class="section">${alertsHtml(top, true)}${rest>0?`<div class="small muted">e altri ${rest} promemoria nelle altre sezioni</div>`:""}</div>`;
+  }
+  h += `<div class="split"><div>
+  <div class="calbar">
+    <button class="iconbtn" data-act="calprev" aria-label="Mese precedente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h2>${MESI[m-1][0].toUpperCase()+MESI[m-1].slice(1)} ${y}</h2>
+    <button class="iconbtn" data-act="calnext" aria-label="Mese successivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="btn sm" data-act="caltoday">Oggi</button>
+  </div>
+  <div class="legend">${AZ_KEYS.map(k => {
+    const h2 = mesLez.filter(l => l.az === k).reduce((s,l)=>s+num(l.ore),0);
+    return `<button class="chipf" data-act="filter" data-az="${k}" aria-pressed="${ui.filters.has(k)}"><span class="dot" style="background:${C[k].c}"></span>${esc(C[k].nome)} <span class="h num">${oreF(h2)}</span></button>`;
+  }).join("")}</div>
+  <div class="cal">${GGS.map(g => `<div class="wd">${g}</div>`).join("")}`;
+  for (let i=0; i<weeks*7; i++){
+    const d = addDays(start, i);
+    const evs = byDay[d] || [];
+    const cls = ["day", ym(d)!==ui.calMonth?"out":"", d===t?"today":"", d===ui.selDay?"sel":""].join(" ");
+    h += `<button class="${cls}" data-act="selday" data-d="${d}" aria-label="${esc(fmtDay(d))}, ${plural(evs.length,"docenza","docenze")}"><span class="n num">${parse(d).getDate()}</span>`;
+    evs.slice(0,3).forEach(l => { h += `<span class="ev" style="--c:${C[l.az].c}">${esc((l.ini?l.ini+" ":"")+(l.titolo||C[l.az].nome))}</span>`; });
+    if (evs.length > 3) h += `<span class="more">+${evs.length-3}</span>`;
+    h += `</button>`;
+  }
+  h += `</div></div>`;
+
+  const dayL = (byDay[ui.selDay] || []);
+  const next = vis.filter(l => l.data > ui.selDay).sort(sortLez).slice(0,6);
+  h += `<aside class="agenda">
+    <div class="section-h"><h3>${esc(fmtDay(ui.selDay))}</h3><div class="spacer"></div><button class="btn sm primary" data-act="newlez" data-d="${ui.selDay}">+ Docenza</button></div>
+    ${dayL.length ? dayL.map(l => lezRow(l)).join("") : `<div class="empty">Nessuna docenza in questa giornata.</div>`}
+    <h3 style="margin-top:10px">Prossime docenze</h3>
+    ${next.length ? next.map(l => lezRow(l,{date:true})).join("") : `<div class="empty">Nessuna docenza in programma dopo questa data.</div>`}
+  </aside></div>`;
+  return h;
+}
+
+function renderFatt(al){
+  const C = cfg(), M = ui.fattMonth, t = today();
+  const ml = lez().filter(l => ym(l.data) === M);
+  const yl = lez().filter(l => l.data.slice(0,4) === M.slice(0,4));
+  let h = `<div class="calbar">
+    <button class="iconbtn" data-act="fprev" aria-label="Mese precedente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h2>${esc(meseNome(M)[0].toUpperCase()+meseNome(M).slice(1))}</h2>
+    <button class="iconbtn" data-act="fnext" aria-label="Mese successivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>`;
+  const totE = ml.reduce((s,l)=>s+lezImporto(l),0), totH = ml.reduce((s,l)=>s+num(l.ore),0);
+  h += `<div class="section"><div class="tiles">
+    <div class="tile"><div class="l">Totale mese</div><div class="v num">${oreF(totH)}</div><div class="s num">${eur(totE)} da aziende · anno ${oreF(yl.reduce((s,l)=>s+num(l.ore),0))}</div></div>
+    ${AZ_KEYS.map(k => { const ls = ml.filter(l=>l.az===k); const hh = ls.reduce((s,l)=>s+num(l.ore),0);
+      return `<div class="tile" style="--c:${C[k].c}"><div class="l">${esc(C[k].nome)}</div><div class="v num">${oreF(hh)}</div><div class="s num">${k==="papa"?"fattura per cliente":eur(ls.reduce((s,l)=>s+lezImporto(l),0))} · anno ${oreF(yl.filter(l=>l.az===k).reduce((s,l)=>s+num(l.ore),0))}</div></div>`; }).join("")}
+  </div></div>`;
+  const fa = al.filter(a => a.tab === "fatture");
+  if (fa.length) h += `<div class="section"><div class="section-h"><h2>Da fare</h2></div>${alertsHtml(fa,false)}</div>`;
+
+  h += `<div class="section"><div class="section-h"><h2>Docenze di ${esc(MESI[parseInt(M.slice(5))-1])}</h2></div>`;
+  for (const az of FATT_AZ){
+    const a = C[az];
+    const ls = ml.filter(l => l.az === az).sort(sortLez);
+    const open = ls.filter(l => !l.fat);
+    const openDone = open.filter(l => l.data <= t);
+    const hh = ls.reduce((s,l)=>s+num(l.ore),0), ee = ls.reduce((s,l)=>s+lezImporto(l),0);
+    const regola = a.fatt === "mensile" ? `Fattura mensile · pagamento a ${a.gg} giorni` : "Fattura a ogni docenza";
+    h += `<div class="card azcard" style="--c:${a.c}">
+      <div class="azcard-h"><span class="dot" style="background:${a.c}"></span><h3>${esc(a.full)}</h3><span class="pill neutral">${esc(regola)}</span><div class="spacer"></div>
+      ${ls.length && a.fatt === "mensile" ? `<button class="btn sm" data-act="copia" data-az="${az}">Copia riepilogo</button>` : ""}
+      ${a.fatt === "mensile" && open.length ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${open.map(l=>l.id).join(",")}">Registra fattura</button>` : ""}
+      </div>`;
+    if (!ls.length) h += `<div class="small muted">Nessuna docenza a ${esc(meseNome(M))}.</div>`;
+    else {
+      h += `<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Corso</th><th class="r">Ore</th><th class="r">€/h</th><th class="r">Importo</th><th>Stato</th></tr></thead><tbody>`;
+      ls.forEach(l => {
+        const f = l.fat && items.get(l.fat);
+        const st = f ? `<span class="pill ${f.pagata?"ok":"info"}">${f.pagata?"saldata":"fatturata"}${f.numero?" n. "+esc(f.numero):""}</span>`
+          : l.data > t ? `<span class="pill neutral">in programma</span>`
+          : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Registra fattura</button>`
+          : `<span class="pill warn">da fatturare</span>`;
+        h += `<tr class="click" data-act="editlez" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(l.titolo||"Docenza")}<div class="small muted">${esc([l.mod==="presenza"?(l.sede||"In presenza"):"Online", l.cliente].filter(Boolean).join(" · "))}</div></td><td class="r num">${oreF(l.ore)}</td><td class="r num">${eur(l.tariffa)}</td><td class="r num">${eur(lezImporto(l))}</td><td>${st}</td></tr>`;
+      });
+      h += `</tbody><tfoot><tr><td colspan="2">Totale</td><td class="r num">${oreF(hh)}</td><td></td><td class="r num">${eur(ee)}</td><td></td></tr></tfoot></table></div>`;
+      if (a.fatt === "mensile" && openDone.length && openDone.length < open.length) h += `<div class="small muted" style="margin-top:6px">Alcune docenze del mese sono ancora in programma: registra la fattura a fine mese.</div>`;
+    }
+    h += `</div>`;
+  }
+  h += `</div>`;
+
+  const fs = fat().sort((a,b) => (b.emessa||"").localeCompare(a.emessa||""));
+  const shown = ui.fattShowAll ? fs : fs.filter(f => !f.pagata);
+  h += `<div class="section"><div class="section-h"><h2>Fatture emesse</h2><div class="spacer"></div>
+    <button class="btn sm" data-act="togglefatt">${ui.fattShowAll ? "Mostra solo da incassare" : `Mostra tutte (${fs.length})`}</button></div>`;
+  if (!shown.length) h += `<div class="empty">${fs.length ? "Tutte le fatture registrate risultano saldate." : "Nessuna fattura registrata. Quando emetti una fattura, premi «Registra fattura» sull'azienda: qui vedrai scadenza e incasso."}</div>`;
+  else {
+    h += `<div class="card tbl-wrap"><table><thead><tr><th>Azienda</th><th>N.</th><th>Emessa</th><th class="r">Importo</th><th>Pagamento</th><th></th></tr></thead><tbody>`;
+    shown.forEach(f => {
+      const a = C[f.az] || C.scilla;
+      let st;
+      if (f.pagata) st = `<span class="pill ok">saldata il ${fmtD(f.pagata)}</span>`;
+      else if (f.scad){ const d = daysBetween(t, f.scad); st = d < 0 ? `<span class="pill bad">scaduta il ${fmtD(f.scad)}</span>` : `<span class="pill ${d<=5?"warn":"neutral"}">attesa entro il ${fmtD(f.scad)}</span>`; }
+      else st = `<span class="pill neutral">in attesa</span>`;
+      h += `<tr><td><span class="dot" style="background:${a.c}"></span> ${esc(a.nome)}<div class="small muted">${esc(f.mese ? meseNome(f.mese) : "")} · ${plural((f.lez||[]).length,"docenza","docenze")}</div></td><td>${esc(f.numero||"—")}</td><td class="num">${fmtD(f.emessa)}</td><td class="r num">${eur(f.importo)}</td><td>${st}</td>
+        <td class="r"><div class="actions" style="justify-content:flex-end">${f.pagata?"":`<button class="btn sm primary" data-act="paga" data-id="${f.id}">Segna saldata</button>`}<button class="btn sm" data-act="editfat" data-id="${f.id}">Modifica</button></div></td></tr>`;
+    });
+    h += `</tbody></table></div>`;
+  }
+  h += `</div>`;
+  return h;
+}
+
+function prevStato(p){
+  const ps = par().filter(x => x.prev === p.id);
+  const attOk = ps.length ? ps.every(x => x.attestato) : !!p.attestatiEmessi;
+  if (p.stato !== "concluso") return {key:"incorso", lbl:"Corsi in corso", cls:"info", attOk, ps};
+  if (!p.fattData) return {key:"dafatturare", lbl:"Da fatturare", cls:"warn", attOk, ps};
+  if (!p.saldato) return {key:"attesa", lbl:"In attesa di saldo", cls:"info", attOk, ps};
+  if (p.attestatiMiei && !attOk) return {key:"attestati", lbl:"Attestati da emettere", cls:"warn", attOk, ps};
+  return {key:"chiuso", lbl:"Completato", cls:"ok", attOk, ps};
+}
+
+function renderPapa(al){
+  const pa = al.filter(a => a.tab === "papa");
+  let h = `<div class="section"><div class="section-h"><h2>Clienti con papà</h2><div class="spacer"></div><button class="btn primary" data-act="newprev">+ Nuovo cliente</button></div>
+  <div class="small muted">Quando papà ti scrive o ti manda una foto con i corsi da fare per un'azienda, crea un cliente: inserisci i corsi e il numero di lavoratori. Ogni cliente segue questi passi: corsi svolti, fattura, saldo, attestati. I partecipanti che aggiungi qui finiscono in EBAFOS, pronti da smistare nei corsi.</div>
+  ${alertsHtml(pa,false)}</div>`;
+  const all = prev().sort((a,b) => (b.data||"").localeCompare(a.data||""));
+  const activi = all.filter(p => prevStato(p).key !== "chiuso");
+  const chiusi = all.filter(p => prevStato(p).key === "chiuso");
+  const card = p => {
+    const st = prevStato(p);
+    const lz = lez().filter(l => l.prev === p.id);
+    const hh = lz.reduce((s,l)=>s+num(l.ore),0);
+    const steps = [
+      {l:"Corsi svolti", d:p.stato==="concluso"},
+      {l:"Fattura emessa", d:!!p.fattData},
+      {l:"Saldato", d:!!p.saldato}
+    ];
+    if (p.attestatiMiei) steps.push({l:"Attestati", d:st.attOk && !!p.saldato});
+    const nowI = steps.findIndex(s => !s.d);
+    let act = "";
+    if (st.key === "incorso") act = `<button class="btn sm primary" data-act="prevconcluso" data-id="${p.id}">Segna corsi svolti</button>`;
+    else if (st.key === "dafatturare") act = `<button class="btn sm primary" data-act="prevfatt" data-id="${p.id}">Registra fattura</button>`;
+    else if (st.key === "attesa") act = `<button class="btn sm primary" data-act="prevsaldo" data-id="${p.id}">Segna saldato</button>`;
+    else if (st.key === "attestati") act = `<button class="btn sm primary" data-act="prevatt" data-id="${p.id}">Segna attestati emessi</button>`;
+    return `<div class="card azcard" style="--c:var(--c-papa)">
+      <div class="azcard-h"><h3>${esc(p.cliente||"Cliente")}</h3><span class="pill ${st.cls}">${st.lbl}</span><div class="spacer"></div><span class="num" style="font-weight:700">${num(p.importo)?eur(p.importo):`<span class="small muted">importo da definire</span>`}</span></div>
+      ${righe(p).length?`<div class="tbl-wrap"><table><thead><tr><th>Corso</th><th class="r">Lavoratori</th><th class="r">Inseriti</th></tr></thead><tbody>${righe(p).map(r => { const ins = st.ps.filter(x => (x.corsoRich||"") === r.corso).length; return `<tr><td>${esc(r.corso)}</td><td class="r num">${esc(r.n)}</td><td class="r"><span class="pill ${ins>=num(r.n)?"ok":"warn"} num">${ins} / ${esc(r.n)}</span></td></tr>`; }).join("")}</tbody><tfoot><tr><td>Totale</td><td class="r num">${righe(p).reduce((s,r)=>s+num(r.n),0)}</td><td class="r num">${st.ps.length}</td></tr></tfoot></table></div>`:""}
+      ${p.corsi?`<div class="small muted" style="white-space:pre-line;margin-top:6px">${esc(p.corsi)}</div>`:""}
+      <div class="steps">${steps.map((s,i) => `<span class="step ${s.d?"done":i===nowI?"now":""}">${s.d?"✓ ":""}${s.l}</span>`).join("")}</div>
+      <div class="small muted">${[p.data?`Richiesta del ${fmtD(p.data)}`:"", p.fattData?`Fattura${p.fattNum?" n. "+p.fattNum:""} del ${fmtD(p.fattData)}`:"", p.saldato?`saldata il ${fmtD(p.saldato)}`:"", lz.length?`${plural(lz.length,"docenza","docenze")} a calendario · ${oreF(hh)}`:"", p.attestatiMiei?"attestati a mio carico":"attestati non a mio carico"].filter(Boolean).join(" · ")}</div>
+      <div class="plist">${st.ps.map(x => { const c = x.ebf && items.get(x.ebf); return `<div class="prow"><span class="nm" data-act="editpar" data-id="${x.id}" style="cursor:pointer">${esc(pname(x))}${x.corsoRich?` <span class="muted small">· ${esc(x.corsoRich)}</span>`:""}</span>${datiMancanti(x)?`<span class="pill bad">dati mancanti</span>`:""}${c?`<span class="pill neutral">${esc(c.titolo||"corso")}</span>`:`<span class="pill warn">da smistare</span>`}${x.attestato?`<span class="pill ok">attestato</span>`:""}</div>`; }).join("")}</div>
+      <div class="actions" style="margin-top:10px">${act}<button class="btn sm" data-act="addpar" data-id="${p.id}">+ Partecipanti</button><button class="btn sm" data-act="editprev" data-id="${p.id}">Modifica</button></div>
+    </div>`;
+  };
+  h += `<div class="section">${activi.length ? `<div class="grid2">${activi.map(card).join("")}</div>` : `<div class="empty">Nessun cliente aperto. Premi «+ Nuovo cliente» quando papà ti segnala un'azienda da seguire.</div>`}</div>`;
+  if (chiusi.length){
+    h += `<div class="section"><div class="section-h"><h2>Completati</h2><span class="pill neutral">${chiusi.length}</span><div class="spacer"></div><button class="btn sm" data-act="togglepapa">${ui.papaShowClosed?"Nascondi":"Mostra"}</button></div>
+    ${ui.papaShowClosed?`<div class="grid2">${chiusi.map(card).join("")}</div>`:""}</div>`;
+  }
+  return h;
+}
+
+function renderEbf(al){
+  const ea = al.filter(a => a.tab === "ebafos");
+  const corsi = ebf().sort((a,b) => (a.ini||"").localeCompare(b.ini||""));
+  const aperti = corsi.filter(c => c.stato === "aperto");
+  const altri = corsi.filter(c => c.stato !== "aperto");
+  const opts = sel => `<option value="">— scegli corso —</option>${aperti.map(c => `<option value="${c.id}" ${sel===c.id?"selected":""}>${esc(c.titolo||"Corso")}${c.ini?" · "+fmtDshort(c.ini):""}</option>`).join("")}`;
+  let h = `<div class="section"><div class="section-h"><h2>Corsi EBAFOS</h2><div class="spacer"></div><button class="btn sm" data-act="newpar">+ Partecipante</button><button class="btn primary" data-act="newebf">+ Corso aperto</button></div>${alertsHtml(ea,false)}</div>`;
+
+  const ds = par().filter(p => !p.ebf || !items.get(p.ebf));
+  h += `<div class="section"><div class="section-h"><h2>Da smistare</h2><span class="pill ${ds.length?"warn":"neutral"}">${ds.length}</span></div>`;
+  if (!ds.length) h += `<div class="empty">Nessun partecipante in attesa. Aggiungili da un cliente nella scheda Papà, oppure direttamente da un corso con «+ Iscritti».</div>`;
+  else {
+    const gruppi = {};
+    ds.forEach(p => { const k = (p.prev && items.get(p.prev)) ? p.prev : ""; (gruppi[k] = gruppi[k] || []).push(p); });
+    const chiavi = Object.keys(gruppi).sort((a,b) => (a?((items.get(a)||{}).cliente||""):"~").localeCompare(b?((items.get(b)||{}).cliente||""):"~"));
+    h += `<div class="card">${chiavi.map(k => `<div style="font-weight:700;margin:${k===chiavi[0]?"0":"12px"} 0 2px;display:flex;gap:8px;align-items:center"><span class="dot" style="background:${k?"var(--c-papa)":"var(--muted)"}"></span>${esc(k ? items.get(k).cliente : "Senza cliente")} <span class="pill neutral">${gruppi[k].length}</span></div>` + gruppi[k].map(p => { const pr = p.prev && items.get(p.prev);
+      return `<div class="prow"><span class="nm"><b>${esc(pname(p))}</b>${datiMancanti(p)?` <span class="pill bad">dati mancanti</span>`:""}<div class="small muted">${esc(p.corsoRich||"corso non indicato")}</div></span>
+      <select aria-label="Assegna a corso" data-act="assegna" data-id="${p.id}">${opts("")}</select>
+      <button class="btn sm" data-act="editpar" data-id="${p.id}">Modifica</button></div>`; }).join("")).join("")}
+      ${!aperti.length?`<div class="small muted" style="margin-top:8px">Apri prima un corso con «+ Corso aperto» per poterli assegnare.</div>`:""}</div>`;
+  }
+  h += `</div>`;
+
+  const ccard = c => {
+    const ps = par().filter(p => p.ebf === c.id);
+    const stp = c.stato === "aperto" ? `<span class="pill info">aperto</span>` : ps.length && ps.every(p=>p.attestato) ? `<span class="pill ok">attestati emessi</span>` : `<span class="pill warn">chiuso · attestati da emettere</span>`;
+    return `<div class="card">
+      <div class="azcard-h"><h3>${esc(c.titolo||"Corso")}</h3>${stp}<div class="spacer"></div><span class="num small muted">${ps.length}${c.max?" / "+esc(c.max):""} iscritti</span></div>
+      <div class="small muted">${esc([c.codice?"ID "+c.codice:"", c.ini?(fmtD(c.ini)+(c.fin&&c.fin!==c.ini?" – "+fmtD(c.fin):"")):"", c.ore?oreF(num(c.ore)):"", c.mod==="presenza"?(c.sede||"in presenza"):"online"].filter(Boolean).join(" · "))}</div>
+      <div class="plist">${ps.length ? ps.map(p => { const pr = p.prev && items.get(p.prev);
+        return `<div class="prow"><span class="nm" data-act="editpar" data-id="${p.id}" style="cursor:pointer">${esc(pname(p))}<span class="small muted">${pr?" · "+esc(pr.cliente):""}</span>${datiMancanti(p)?` <span class="pill bad">dati mancanti</span>`:""}</span>
+        ${c.stato!=="aperto"?`<label class="small" style="display:flex;gap:5px;align-items:center"><input type="checkbox" data-act="att" data-id="${p.id}" ${p.attestato?"checked":""}> attestato</label>`:""}
+        <button class="btn sm" data-act="unassign" data-id="${p.id}" title="Rimetti tra i da smistare">Sposta</button></div>`; }).join("") : `<div class="small muted">Nessun iscritto.</div>`}</div>
+      <div class="actions" style="margin-top:10px">
+        ${c.stato==="aperto"?`<button class="btn sm primary" data-act="dacliente" data-id="${c.id}">+ Da clienti di papà</button><button class="btn sm" data-act="iscritti" data-id="${c.id}">+ Altri iscritti</button><button class="btn sm" data-act="chiudiebf" data-id="${c.id}">Chiudi corso</button>`:""}
+        ${c.stato!=="aperto" && ps.some(p=>!p.attestato)?`<button class="btn sm primary" data-act="attall" data-id="${c.id}">Attestati emessi per tutti</button>`:""}
+        <button class="btn sm" data-act="copiaebf" data-id="${c.id}">Copia dati per attestati</button>
+        <button class="btn sm" data-act="editebf" data-id="${c.id}">Modifica</button>
+      </div></div>`;
+  };
+  h += `<div class="section"><div class="section-h"><h2>Aperti sul portale</h2><span class="pill neutral">${aperti.length}</span></div>${aperti.length?`<div class="grid2">${aperti.map(ccard).join("")}</div>`:`<div class="empty">Nessun corso aperto. Quando apri un corso sul portale EBAFOS, registralo qui con «+ Corso aperto».</div>`}</div>`;
+  if (altri.length) h += `<div class="section"><div class="section-h"><h2>Chiusi</h2><span class="pill neutral">${altri.length}</span><div class="spacer"></div><button class="btn sm" data-act="toggleebf">${ui.ebfShowClosed?"Nascondi":"Mostra"}</button></div>${ui.ebfShowClosed?`<div class="grid2">${altri.map(ccard).join("")}</div>`:""}</div>`;
+  return h;
+}
+
+/* ---------- modali ---------- */
+let modalClose = null;
+function openModal(html, mount){
+  const root = $("#modal-root");
+  root.innerHTML = `<div class="backdrop" id="bd"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  const bd = $("#bd");
+  const close = () => { root.innerHTML = ""; document.removeEventListener("keydown", onKey); modalClose = null; };
+  const onKey = e => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  bd.addEventListener("click", e => { if (e.target === bd) close(); });
+  bd.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", close));
+  modalClose = close;
+  if (mount) mount(bd.querySelector(".modal"), close);
+  const f = bd.querySelector("input:not([type=radio]):not([type=checkbox]),textarea,select");
+  if (f && window.innerWidth > 700) f.focus();
+}
+function armDelete(btn, fn){
+  btn.addEventListener("click", () => {
+    if (btn.classList.contains("armed")) fn();
+    else { btn.classList.add("armed"); btn.textContent = "Conferma eliminazione"; setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Elimina"; }, 4000); }
+  });
+}
+function fd(form){ const o = {}; new FormData(form).forEach((v,k) => o[k] = typeof v === "string" ? v.trim() : v); return o; }
+function ask(title, fields, okLabel){
+  return new Promise(res => {
+    openModal(`<form id="f-ask"><h2>${esc(title)}</h2>${fields.map(f => `<div class="fld"><label for="ask-${f.n}">${esc(f.l)}</label><input id="ask-${f.n}" name="${f.n}" type="${f.t||"text"}" value="${esc(f.v||"")}" ${f.step?`step="${f.step}"`:""} ${f.req?"required":""}></div>`).join("")}
+      <div class="mfoot"><div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">${esc(okLabel||"Salva")}</button></div></form>`,
+      (m, close) => { m.querySelector("form").addEventListener("submit", e => { e.preventDefault(); const v = fd(e.target); close(); res(v); }); });
+  });
+}
+
+function lezModal(src){
+  const C = cfg();
+  const l = {az:"scilla", mod:"online", data:ui.selDay, ini:"09:00", fin:"13:00", ...src};
+  const isNew = !l.id;
+  if (l.tariffa == null) l.tariffa = l.mod === "presenza" ? C[l.az].tariffaPres : C[l.az].tariffa;
+  if (l.ore == null) l.ore = diffH(l.ini, l.fin);
+  const f = l.fat && items.get(l.fat);
+  const prevOpts = prev().filter(p => prevStato(p).key !== "chiuso" || p.id === l.prev);
+  const ebfOpts = ebf().filter(c => c.stato === "aperto" || c.id === l.ebf);
+  openModal(`<form id="f-lez">
+    <h2>${isNew ? "Nuova docenza" : "Docenza"}</h2>
+    ${f ? `<div class="banner" style="background:var(--info-bg)">Inclusa nella fattura${f.numero?" n. "+esc(f.numero):""} del ${fmtD(f.emessa)}. Se cambi ore o tariffa, aggiorna anche la fattura.</div>` : ""}
+    <div class="lbl" style="margin-bottom:6px">Per chi</div>
+    <div class="seg">${AZ_KEYS.map(k => `<input type="radio" name="az" id="az-${k}" value="${k}" ${l.az===k?"checked":""}><label for="az-${k}" style="--c:${C[k].c}"><span class="dot" style="background:${C[k].c}"></span>${esc(C[k].nome)}</label>`).join("")}</div>
+    <div class="row">
+      <div class="fld"><label for="l-data">Data</label><input id="l-data" type="date" name="data" value="${esc(l.data)}" required></div>
+      <div class="fld"><label for="l-ini">Inizio</label><input id="l-ini" type="time" name="ini" value="${esc(l.ini||"")}"></div>
+      <div class="fld"><label for="l-fin">Fine</label><input id="l-fin" type="time" name="fin" value="${esc(l.fin||"")}"></div>
+      <div class="fld"><label for="l-ore">Ore</label><input id="l-ore" type="number" step="0.25" min="0" name="ore" value="${esc(l.ore)}" inputmode="decimal"></div>
+    </div>
+    <div class="fld"><label for="l-tit">Corso</label><input id="l-tit" name="titolo" list="dl-titoli" value="${esc(l.titolo||"")}" placeholder="Es. Formazione lavoratori - parte generale"></div>
+    <div class="lbl" style="margin-bottom:6px">Modalità</div>
+    <div class="seg"><input type="radio" name="mod" id="m-on" value="online" ${l.mod!=="presenza"?"checked":""}><label for="m-on">Online</label><input type="radio" name="mod" id="m-pr" value="presenza" ${l.mod==="presenza"?"checked":""}><label for="m-pr">In presenza</label></div>
+    <div class="fld" id="w-sede"><label for="l-sede">Sede</label><input id="l-sede" name="sede" list="dl-sedi" value="${esc(l.sede||"")}" placeholder="Es. Passo Corese"></div>
+    <div class="row" id="w-az">
+      <div class="fld"><label for="l-tar">Tariffa €/ora</label><input id="l-tar" type="number" step="0.5" min="0" name="tariffa" value="${esc(l.tariffa)}" inputmode="decimal"></div>
+      <div class="fld"><label for="l-cli">Cliente finale (facoltativo)</label><input id="l-cli" name="cliente" value="${esc(l.cliente||"")}"></div>
+    </div>
+    <div class="hint" id="w-imp"></div>
+    <div class="row" id="w-papa">
+      <div class="fld"><label for="l-prev">Cliente di papà</label><select id="l-prev" name="prev"><option value="">—</option>${prevOpts.map(p => `<option value="${p.id}" ${l.prev===p.id?"selected":""}>${esc(p.cliente||"Cliente")}</option>`).join("")}</select></div>
+      <div class="fld"><label for="l-ebf">Corso EBAFOS</label><select id="l-ebf" name="ebf"><option value="">—</option>${ebfOpts.map(c => `<option value="${c.id}" ${l.ebf===c.id?"selected":""}>${esc(c.titolo||"Corso")}</option>`).join("")}</select></div>
+    </div>
+    <div class="fld"><label for="l-note">Note</label><textarea id="l-note" name="note">${esc(l.note||"")}</textarea></div>
+    <div class="mfoot">
+      ${isNew ? "" : `<button type="button" class="btn danger" id="l-del">Elimina</button><button type="button" class="btn" id="l-dup">Duplica</button>`}
+      <div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button>
+    </div></form>`,
+  (m, close) => {
+    const form = m.querySelector("form");
+    let tarManual = !isNew, oreManual = !isNew && Math.abs(num(l.ore) - diffH(l.ini,l.fin)) > 0.01;
+    const g = n => form.elements[n];
+    const refresh = () => {
+      const az = form.querySelector("[name=az]:checked").value, mod = form.querySelector("[name=mod]:checked").value;
+      if (!tarManual) g("tariffa").value = mod === "presenza" ? C[az].tariffaPres : C[az].tariffa;
+      if (!oreManual) g("ore").value = diffH(g("ini").value, g("fin").value);
+      m.querySelector("#w-az").style.display = az === "papa" ? "none" : "";
+      m.querySelector("#w-papa").style.display = az === "papa" ? "" : "none";
+      m.querySelector("#w-sede").style.display = mod === "presenza" ? "" : "none";
+      m.querySelector("#w-imp").textContent = az === "papa" ? "Le docenze con papà si fatturano per cliente nella scheda Papà: qui conto solo le ore." : `Importo: ${eur(num(g("ore").value)*num(g("tariffa").value))}`;
+    };
+    form.addEventListener("change", e => { if (e.target.name === "az" || e.target.name === "mod") tarManual = false; refresh(); });
+    g("tariffa").addEventListener("input", () => { tarManual = true; refresh(); });
+    g("ore").addEventListener("input", () => { oreManual = true; refresh(); });
+    g("ini").addEventListener("input", () => { oreManual = false; refresh(); });
+    g("fin").addEventListener("input", () => { oreManual = false; refresh(); });
+    refresh();
+    const collect = () => {
+      const v = fd(form);
+      const o = {k:"lez", az:v.az, data:v.data, ini:v.ini, fin:v.fin, ore:num(v.ore), titolo:v.titolo, mod:v.mod, sede:v.mod==="presenza"?v.sede:"", note:v.note};
+      if (v.az === "papa"){ o.tariffa = 0; o.prev = v.prev || null; o.ebf = v.ebf || null; o.cliente = ""; }
+      else { o.tariffa = num(v.tariffa); o.cliente = v.cliente; o.prev = null; o.ebf = null; }
+      return o;
+    };
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const o = collect();
+      if (!o.data){ toast("Indica la data."); return; }
+      o.fat = l.fat || null;
+      save(l.id, o); ui.selDay = o.data; ui.calMonth = ym(o.data); close(); toast("Docenza salvata");
+    });
+    if (!isNew){
+      armDelete(m.querySelector("#l-del"), () => {
+        if (l.fat){ const f2 = items.get(l.fat); if (f2) patch(f2.id, {lez:(f2.lez||[]).filter(x => x !== l.id)}); }
+        del(l.id); close(); toast("Docenza eliminata");
+      });
+      m.querySelector("#l-dup").addEventListener("click", () => { const o = collect(); close(); lezModal({...o, data:addDays(o.data,7)}); toast("Copia pronta: scegli la nuova data e salva"); });
+    }
+  });
+}
+
+function fatModal(az, ids, existing){
+  const C = cfg(), a = C[az];
+  const ls = ids.map(i => items.get(i)).filter(Boolean).sort(sortLez);
+  const imp = existing ? existing.importo : ls.reduce((s,l)=>s+lezImporto(l),0);
+  const em = existing ? existing.emessa : today();
+  const gg = a.gg;
+  openModal(`<form><h2>${existing?"Fattura":"Registra fattura"} · ${esc(a.full)}</h2>
+    <div class="small muted" style="margin-bottom:10px">${ls.map(l => `${fmtD(l.data)} · ${esc(l.titolo||"Docenza")} · ${oreF(l.ore)}`).join("<br>")||"Nessuna docenza collegata"}</div>
+    <div class="row">
+      <div class="fld"><label for="f-num">Numero fattura</label><input id="f-num" name="numero" value="${esc(existing?existing.numero:"")}"></div>
+      <div class="fld"><label for="f-em">Data emissione</label><input id="f-em" type="date" name="emessa" value="${esc(em)}" required></div>
+      <div class="fld"><label for="f-imp">Importo €</label><input id="f-imp" type="number" step="0.01" name="importo" value="${esc(Math.round(imp*100)/100)}" inputmode="decimal"></div>
+    </div>
+    <div class="fld"><label for="f-sc">Pagamento atteso entro</label><input id="f-sc" type="date" name="scad" value="${esc(existing ? (existing.scad||"") : (gg!=null ? addDays(em, gg) : ""))}"></div>
+    <div class="hint">${gg!=null?`${esc(a.full)} paga di solito a ${gg} giorni dall'emissione.`:"Termini di pagamento non impostati: puoi indicare una data o lasciarla vuota."}</div>
+    ${existing?`<div class="fld"><label for="f-pag">Saldata il</label><input id="f-pag" type="date" name="pagata" value="${esc(existing.pagata||"")}"></div>`:""}
+    <div class="mfoot">${existing?`<button type="button" class="btn danger" id="f-del">Elimina</button>`:""}<div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button></div></form>`,
+  (m, close) => {
+    const form = m.querySelector("form");
+    form.elements.emessa.addEventListener("change", () => { if (gg != null) form.elements.scad.value = addDays(form.elements.emessa.value, gg); });
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const v = fd(form);
+      const body = {k:"fat", az, mese: ls.length ? ym(ls[ls.length-1].data) : (existing && existing.mese) || null, lez: ids, numero:v.numero, emessa:v.emessa, importo:num(v.importo), ore: ls.reduce((s,l)=>s+num(l.ore),0), scad:v.scad||null, pagata: existing ? (v.pagata||null) : null};
+      close();
+      const id = await save(existing && existing.id, body);
+      if (!existing) await seq(ls, l => patch(l.id, {fat:id}));
+      toast(existing ? "Fattura aggiornata" : "Fattura registrata");
+    });
+    if (existing) armDelete(m.querySelector("#f-del"), async () => {
+      close();
+      await seq(lez().filter(l => l.fat === existing.id), l => patch(l.id, {fat:null}));
+      del(existing.id); toast("Fattura eliminata: le docenze tornano da fatturare");
+    });
+  });
+}
+
+function prevModal(p){
+  p = p || {cliente:"", corsi:"", righe:[], importo:"", data:today(), stato:"aperto", attestatiMiei:true};
+  openModal(`<form><h2>${p.id?esc(p.cliente||"Cliente"):"Nuovo cliente"}</h2>
+    <div id="ai-box"></div>
+    <div class="fld"><label for="p-cli">Cliente (azienda)</label><input id="p-cli" name="cliente" value="${esc(p.cliente)}" required></div>
+    <div class="lbl" style="margin-bottom:6px">Corsi necessari e numero di lavoratori</div>
+    <div id="p-righe" style="display:grid;gap:6px;margin-bottom:6px"></div>
+    <button type="button" class="btn sm" id="p-add" style="margin-bottom:12px">+ Aggiungi corso</button>
+    <div class="fld"><label for="p-corsi">Altre note sui corsi (facoltativo)</label><textarea id="p-corsi" name="corsi" style="min-height:50px">${esc(p.corsi||"")}</textarea></div>
+    <div class="row">
+      <div class="fld"><label for="p-imp">Importo concordato € (se già noto)</label><input id="p-imp" type="number" step="0.01" name="importo" value="${esc(p.importo)}" inputmode="decimal"></div>
+      <div class="fld"><label for="p-data">Data richiesta</label><input id="p-data" type="date" name="data" value="${esc(p.data||"")}"></div>
+    </div>
+    <label class="check"><input type="checkbox" name="attestatiMiei" ${p.attestatiMiei?"checked":""}> Curo io l'emissione degli attestati</label>
+    <label class="check"><input type="checkbox" name="concluso" ${p.stato==="concluso"?"checked":""}> Corsi svolti</label>
+    <div class="row">
+      <div class="fld"><label for="p-fn">N. fattura</label><input id="p-fn" name="fattNum" value="${esc(p.fattNum||"")}"></div>
+      <div class="fld"><label for="p-fd">Fattura emessa il</label><input id="p-fd" type="date" name="fattData" value="${esc(p.fattData||"")}"></div>
+      <div class="fld"><label for="p-sd">Saldata il</label><input id="p-sd" type="date" name="saldato" value="${esc(p.saldato||"")}"></div>
+    </div>
+    <label class="check"><input type="checkbox" name="attestatiEmessi" ${p.attestatiEmessi?"checked":""}> Attestati emessi</label>
+    <div class="fld"><label for="p-note">Note</label><textarea id="p-note" name="note">${esc(p.note||"")}</textarea></div>
+    <div class="mfoot">${p.id?`<button type="button" class="btn danger" id="p-del">Elimina</button>`:""}<div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button></div></form>`,
+  (m, close) => {
+    const form = m.querySelector("form");
+    const box = m.querySelector("#p-righe");
+    const addRiga = (r={corso:"", n:""}) => {
+      const d = document.createElement("div");
+      d.className = "riga"; d.style.cssText = "display:grid;grid-template-columns:1fr 90px 36px;gap:6px";
+      const i = box.children.length;
+      d.innerHTML = `<input aria-label="Corso" list="dl-titoli" class="r-c" value="${esc(r.corso)}" placeholder="Es. Formazione lavoratori - parte generale" style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)"><input aria-label="Numero lavoratori" class="r-n" type="number" min="0" inputmode="numeric" value="${esc(r.n)}" placeholder="N." style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)"><button type="button" class="iconbtn" aria-label="Togli corso">×</button>`;
+      d.querySelector("button").addEventListener("click", () => d.remove());
+      box.appendChild(d);
+    };
+    (righe(p).length ? righe(p) : [{corso:"", n:""}]).forEach(addRiga);
+    m.querySelector("#p-add").addEventListener("click", () => addRiga());
+    let found = [];
+    if (!p.id) mountAi(m.querySelector("#ai-box"), "cliente", res => {
+      if (res.cliente) form.elements.cliente.value = res.cliente;
+      if (Array.isArray(res.corsi) && res.corsi.length){ box.innerHTML = ""; res.corsi.forEach(r => addRiga({corso:r.corso||"", n:r.lavoratori ?? ""})); }
+      if (res.note) form.elements.corsi.value = res.note;
+      if (res.importo) form.elements.importo.value = res.importo;
+      found = Array.isArray(res.partecipanti) ? res.partecipanti : [];
+      return `Compilato: controlla i campi${found.length ? ` · ${plural(found.length,"partecipante trovato","partecipanti trovati")}, li aggiungo al salvataggio` : ""}.`;
+    });
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const v = fd(form);
+      const rr = [...box.querySelectorAll(".riga")].map(d => ({corso:d.querySelector(".r-c").value.trim(), n:num(d.querySelector(".r-n").value)})).filter(r => r.corso);
+      close();
+      const pid = await save(p.id, {k:"prev", cliente:v.cliente, righe:rr, corsi:v.corsi, importo:num(v.importo), data:v.data, stato: v.concluso ? "concluso" : "aperto", attestatiMiei: !!v.attestatiMiei, attestatiEmessi: !!v.attestatiEmessi, fattNum:v.fattNum, fattData:v.fattData||null, saldato:v.saldato||null, note:v.note});
+      await seq(found, x => save(null, parFromAi(x, {prev:pid, corsoRich: x.corso || (rr.length===1 ? rr[0].corso : "")})));
+      toast(found.length ? `Cliente salvato con ${plural(found.length,"partecipante","partecipanti")}` : "Cliente salvato");
+    });
+    if (p.id) armDelete(m.querySelector("#p-del"), async () => {
+      close();
+      await seq(par().filter(x => x.prev === p.id), x => patch(x.id, {prev:null}));
+      del(p.id); toast("Cliente eliminato");
+    });
+  });
+}
+
+function addParModal(prevId, ebfId){
+  const p = prevId && items.get(prevId);
+  const c = ebfId && items.get(ebfId);
+  const rr = p ? righe(p) : [];
+  const titolo = p ? p.cliente : c ? c.titolo : "";
+  openModal(`<form><h2>${c?"Iscritti":"Partecipanti"} · ${esc(titolo)}</h2>
+    <div id="ai-box"></div>
+    ${c ? `<input type="hidden" name="corso" value="${esc(c.titolo||"")}">
+      <div class="fld"><label for="ap-p">Cliente di papà (facoltativo)</label><select id="ap-p" name="prev"><option value="">—</option>${prev().filter(x => prevStato(x).key !== "chiuso").map(x => `<option value="${x.id}">${esc(x.cliente)}</option>`).join("")}</select></div>`
+      : `<div class="fld"><label for="ap-c">Corso</label>${rr.length ? `<select id="ap-c" name="corso">${rr.map(r => `<option value="${esc(r.corso)}">${esc(r.corso)} (${esc(r.n)} lavoratori)</option>`).join("")}</select>` : `<input id="ap-c" name="corso" list="dl-titoli" placeholder="Es. Formazione lavoratori - parte generale">`}</div>`}
+    <div class="hint">Uno per riga, campi separati da punto e virgola:<br><b>Nome; Cognome; Luogo di nascita; Data di nascita; Codice fiscale</b><br>Il codice fiscale è facoltativo. Puoi incollare anche righe copiate da Excel.</div>
+    <div class="fld"><label for="ap-l">Elenco</label><textarea id="ap-l" name="lista" style="min-height:160px" placeholder="Mario; Rossi; Roma; 01/01/1980&#10;Laura; Bianchi; Rieti; 15/03/1992; BNCLRA92C55H282X"></textarea></div>
+    <div class="mfoot"><div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Aggiungi</button></div></form>`,
+  (m, close) => {
+    const form = m.querySelector("form");
+    mountAi(m.querySelector("#ai-box"), "partecipanti", res => {
+      const ps = Array.isArray(res.partecipanti) ? res.partecipanti : [];
+      form.elements.lista.value = ps.map(x => [x.nome, x.cognome, x.luogoNascita, x.dataNascita ? fmtD(parseDataIt(x.dataNascita)) : "", x.cf].map(v => v || "").join("; ").replace(/(; )+$/,"")).join("\n");
+      return ps.length ? `Trovati ${plural(ps.length,"partecipante","partecipanti")}: controlla l'elenco e premi Aggiungi.` : "Non ho trovato partecipanti in quello che hai caricato.";
+    });
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const v = fd(e.target);
+      const rows = v.lista.split(/\n+/).map(r => r.trim()).filter(Boolean);
+      close();
+      const pid = prevId || v.prev || null;
+      await seq(rows, r => { const [nome, cognome, luogo, data, cf] = r.split(/[;\t]/).map(x => (x||"").trim()); return save(null, {k:"par", nome, cognome:cognome||"", luogoNascita:luogo||"", dataNascita:parseDataIt(data), cf:(cf||"").toUpperCase(), corsoRich:v.corso||"", prev:pid, ebf:ebfId||null, attestato:false}); });
+      toast(`${plural(rows.length,"partecipante aggiunto","partecipanti aggiunti")}${ebfId ? " al corso" : ": li trovi in EBAFOS da smistare"}`);
+    });
+  });
+}
+
+function pickModal(ebfId){
+  const c = items.get(ebfId); if (!c) return;
+  const norm = t => (t||"").toLowerCase().replace(/\s+/g," ").trim();
+  const clienti = prev().filter(p => par().some(x => x.prev === p.id))
+    .map(p => ({p, liberi: par().filter(x => x.prev === p.id && (!x.ebf || !items.get(x.ebf))).length}))
+    .sort((a,b) => (b.liberi>0) - (a.liberi>0) || (a.p.cliente||"").localeCompare(b.p.cliente||""));
+  if (!clienti.length){
+    openModal(`<h2>Iscrivi da clienti di papà</h2><div class="empty">Non ci sono ancora lavoratori registrati. Vai nella scheda Papà, apri un cliente e premi «+ Partecipanti».</div><div class="mfoot"><div class="spacer"></div><a class="btn primary" href="#papa" data-close>Vai a Papà</a></div>`);
+    return;
+  }
+  openModal(`<form><h2>Iscrivi a «${esc(c.titolo||"corso")}»</h2>
+    <div class="fld"><label for="pk-c">Cliente</label><select id="pk-c">${clienti.map(({p,liberi}) => `<option value="${p.id}">${esc(p.cliente||"Cliente")} · ${liberi ? plural(liberi,"da iscrivere","da iscrivere") : "tutti già iscritti"}</option>`).join("")}</select></div>
+    <div class="actions" style="margin-bottom:6px"><button type="button" class="btn sm" id="pk-all">Seleziona tutti</button><button type="button" class="btn sm" id="pk-none">Nessuno</button><span class="small muted" id="pk-n"></span></div>
+    <div id="pk-list" class="plist" style="margin-bottom:6px"></div>
+    <div class="hint">Sono già spuntati i lavoratori che devono fare questo corso. Chi è iscritto a un altro corso aperto viene spostato qui.</div>
+    <div class="mfoot"><div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary" id="pk-go">Iscrivi</button></div></form>`,
+  (m, close) => {
+    const sel = m.querySelector("#pk-c"), list = m.querySelector("#pk-list"), nEl = m.querySelector("#pk-n"), go = m.querySelector("#pk-go");
+    const count = () => { const n = list.querySelectorAll("input:checked:not(:disabled)").length; nEl.textContent = n ? plural(n,"selezionato","selezionati") : ""; go.disabled = !n; go.textContent = n ? `Iscrivi ${n}` : "Iscrivi"; };
+    const draw = () => {
+      const ps = par().filter(x => x.prev === sel.value).sort((a,b) => pname(a).localeCompare(pname(b)));
+      list.innerHTML = ps.map(x => {
+        const cur = x.ebf && items.get(x.ebf);
+        const qui = x.ebf === ebfId;
+        const match = !cur && (!x.corsoRich || norm(x.corsoRich) === norm(c.titolo));
+        return `<label class="prow" style="cursor:pointer"><input type="checkbox" value="${x.id}" ${qui?"checked disabled":match?"checked":""}>
+          <span class="nm">${esc(pname(x))}<span class="small muted">${x.corsoRich?" · "+esc(x.corsoRich):""}</span></span>
+          ${qui?`<span class="pill ok">già iscritto</span>`:cur?`<span class="pill neutral">in ${esc(cur.titolo||"altro corso")}</span>`:`<span class="pill warn">da iscrivere</span>`}
+          ${datiMancanti(x)?`<span class="pill bad">dati mancanti</span>`:""}</label>`;
+      }).join("") || `<div class="small muted">Nessun lavoratore per questo cliente.</div>`;
+      count();
+    };
+    sel.addEventListener("change", draw);
+    list.addEventListener("change", count);
+    m.querySelector("#pk-all").addEventListener("click", () => { list.querySelectorAll("input:not(:disabled)").forEach(i => i.checked = true); count(); });
+    m.querySelector("#pk-none").addEventListener("click", () => { list.querySelectorAll("input:not(:disabled)").forEach(i => i.checked = false); count(); });
+    draw();
+    m.querySelector("form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const ids = [...list.querySelectorAll("input:checked:not(:disabled)")].map(i => i.value);
+      if (!ids.length) return;
+      close();
+      await seq(ids, id => patch(id, {ebf: ebfId}));
+      toast(`${plural(ids.length,"lavoratore iscritto","lavoratori iscritti")} al corso`);
+    });
+  });
+}
+
+/* ---------- lettura da foto o mail ---------- */
+let sampleP = null;
+function getSample(){ if (!sampleP) sampleP = (window.claude && typeof window.claude.use === "function") ? window.claude.use("sample").catch(() => null) : Promise.resolve(null); return sampleP; }
+function parFromAi(x, extra){ return {k:"par", nome:(x.nome||"").trim(), cognome:(x.cognome||"").trim(), luogoNascita:(x.luogoNascita||"").trim(), dataNascita:parseDataIt(x.dataNascita||""), cf:(x.cf||"").toUpperCase().trim(), corsoRich:"", prev:null, ebf:null, attestato:false, ...extra}; }
+async function mountAi(el, kind, apply){
+  const sample = await getSample();
+  if (!sample || !el.isConnected) return;
+  el.innerHTML = `<div class="card" style="background:var(--surface-2);margin-bottom:12px">
+    <div style="font-weight:700;margin-bottom:4px">Compila dalla foto o dalla mail di papà</div>
+    <div class="hint" style="margin:0 0 8px">Incolla il testo della mail o del messaggio, oppure carica una o più foto. Poi controlla i dati prima di salvare.</div>
+    <div class="fld"><label for="ai-t">Testo</label><textarea id="ai-t" style="min-height:70px" placeholder="Es. Per la Edil Rossi servono parte generale e specifica rischio medio per 6 operai e preposti per 2…"></textarea></div>
+    <div class="actions"><label class="btn sm" for="ai-f">Carica foto</label><input id="ai-f" type="file" accept="image/*" multiple style="position:absolute;opacity:0;width:1px;height:1px"><span class="small muted" id="ai-fn"></span><div class="spacer" style="flex:1"></div><button type="button" class="btn sm primary" id="ai-go">Leggi e compila</button></div>
+    <div class="small" id="ai-msg" style="margin-top:6px"></div></div>`;
+  const fi = el.querySelector("#ai-f"), msg = el.querySelector("#ai-msg"), go = el.querySelector("#ai-go");
+  fi.addEventListener("change", () => { el.querySelector("#ai-fn").textContent = fi.files.length ? plural(fi.files.length,"foto","foto") + " pronte" : ""; });
+  go.addEventListener("click", async () => {
+    const txt = el.querySelector("#ai-t").value.trim(), files = [...fi.files];
+    if (!txt && !files.length){ msg.textContent = "Incolla un testo o carica una foto."; return; }
+    const titoli = [...new Set([...TITOLI_BASE, ...lez().map(l => l.titolo).filter(Boolean)])];
+    // nota: "generale" = Formazione lavoratori - parte generale; "specifica medio" = Formazione specifica - rischio medio, ecc.
+    const schema = kind === "cliente"
+      ? `{"cliente": string (ragione sociale dell'azienda), "corsi": [{"corso": string, "lavoratori": number}], "importo": number|null, "note": string (altre informazioni utili, breve), "partecipanti": [{"nome": string, "cognome": string, "luogoNascita": string, "dataNascita": "GG/MM/AAAA" o "", "cf": string o "", "corso": string o ""}]}`
+      : `{"partecipanti": [{"nome": string, "cognome": string, "luogoNascita": string, "dataNascita": "GG/MM/AAAA" o "", "cf": string o ""}]}`;
+    const prompt = `Sei l'assistente di una formatrice in sicurezza sul lavoro (D.Lgs. 81/08). Dal materiale qui sotto (messaggio, mail o foto di appunti/elenchi) estrai i dati richiesti.
+Per i nomi dei corsi usa sempre, quando corrispondono, esattamente questi nomi standard: ${titoli.join("; ")}. Esempi: "generale" = "Formazione lavoratori - parte generale"; "specifica medio" o "rischio medio" = "Formazione specifica - rischio medio"; "agg. preposti" = "Aggiornamento preposti". Se una persona deve fare parte generale e specifica, crea per i corsi righe separate.
+Se una persona deve fare più corsi, mettila una volta sola e indica il corso principale. Non inventare dati: lascia "" o null se mancano.
+Rispondi SOLO con JSON valido con questa forma: ${schema}
+
+Materiale:
+${txt || "(vedi le foto allegate)"}`;
+    go.disabled = true; msg.textContent = "Sto leggendo…";
+    try {
+      const opts = {modelTier:"default"};
+      if (files.length){
+        const lim = sample.limits ? await sample.limits() : null;
+        if (lim && lim.images) opts.images = files; else { msg.textContent = "In questa vista non posso leggere le foto: incolla il testo."; go.disabled = false; return; }
+      }
+      const res = await sample.json(prompt, opts);
+      msg.textContent = apply(res || {}) || "Fatto.";
+    } catch(e){
+      msg.textContent = e && e.code === "rate_limited" ? "Troppe richieste ravvicinate: riprova tra un minuto." : "Non sono riuscito a leggere il contenuto. Riprova o compila a mano.";
+    } finally { go.disabled = false; }
+  });
+}
+
+function parModal(x){
+  x = x || {nome:"", cognome:"", luogoNascita:"", dataNascita:"", cf:"", corsoRich:"", prev:null, ebf:null, attestato:false};
+  openModal(`<form><h2>${x.id?"Partecipante":"Nuovo partecipante"}</h2>
+    <div class="row"><div class="fld"><label for="x-n">Nome</label><input id="x-n" name="nome" value="${esc(x.nome)}" required></div>
+    <div class="fld"><label for="x-cg">Cognome</label><input id="x-cg" name="cognome" value="${esc(x.cognome||"")}" required></div></div>
+    <div class="row"><div class="fld"><label for="x-ln">Luogo di nascita</label><input id="x-ln" name="luogoNascita" value="${esc(x.luogoNascita||"")}"></div>
+    <div class="fld"><label for="x-dn">Data di nascita</label><input id="x-dn" type="date" name="dataNascita" value="${esc(x.dataNascita||"")}"></div></div>
+    <div class="fld"><label for="x-cf">Codice fiscale (facoltativo)</label><input id="x-cf" name="cf" value="${esc(x.cf||"")}" style="text-transform:uppercase"></div>
+    <div class="fld"><label for="x-cr">Corso richiesto</label><input id="x-cr" name="corsoRich" list="dl-titoli" value="${esc(x.corsoRich||"")}"></div>
+    <div class="row">
+      <div class="fld"><label for="x-p">Cliente di papà (facoltativo)</label><select id="x-p" name="prev"><option value="">—</option>${prev().map(p => `<option value="${p.id}" ${x.prev===p.id?"selected":""}>${esc(p.cliente)}</option>`).join("")}</select></div>
+      <div class="fld"><label for="x-e">Corso EBAFOS</label><select id="x-e" name="ebf"><option value="">Da smistare</option>${ebf().filter(c => c.stato==="aperto" || c.id===x.ebf).map(c => `<option value="${c.id}" ${x.ebf===c.id?"selected":""}>${esc(c.titolo)}</option>`).join("")}</select></div>
+    </div>
+    <label class="check"><input type="checkbox" name="attestato" ${x.attestato?"checked":""}> Attestato emesso</label>
+    <div class="mfoot">${x.id?`<button type="button" class="btn danger" id="x-del">Elimina</button>`:""}<div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button></div></form>`,
+  (m, close) => {
+    m.querySelector("form").addEventListener("submit", e => {
+      e.preventDefault(); const v = fd(e.target);
+      save(x.id, {k:"par", nome:v.nome, cognome:v.cognome, luogoNascita:v.luogoNascita, dataNascita:v.dataNascita||"", cf:(v.cf||"").toUpperCase(), corsoRich:v.corsoRich, prev:v.prev||null, ebf:v.ebf||null, attestato:!!v.attestato});
+      close(); toast("Partecipante salvato");
+    });
+    if (x.id) armDelete(m.querySelector("#x-del"), () => { del(x.id); close(); toast("Partecipante eliminato"); });
+  });
+}
+
+function ebfModal(c){
+  c = c || {titolo:"", codice:"", ini:"", fin:"", ore:"", mod:"online", sede:"", max:"", stato:"aperto"};
+  openModal(`<form><h2>${c.id?"Corso EBAFOS":"Nuovo corso EBAFOS"}</h2>
+    <div class="fld"><label for="e-t">Titolo / tipologia</label><input id="e-t" name="titolo" list="dl-titoli" value="${esc(c.titolo)}" required></div>
+    <div class="row">
+      <div class="fld"><label for="e-c">ID corso sul portale</label><input id="e-c" name="codice" value="${esc(c.codice||"")}"></div>
+      <div class="fld"><label for="e-o">Ore</label><input id="e-o" type="number" step="0.5" name="ore" value="${esc(c.ore||"")}"></div>
+      <div class="fld"><label for="e-m">Max partecipanti</label><input id="e-m" type="number" name="max" value="${esc(c.max||"")}"></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label for="e-i">Inizio</label><input id="e-i" type="date" name="ini" value="${esc(c.ini||"")}"></div>
+      <div class="fld"><label for="e-f">Fine</label><input id="e-f" type="date" name="fin" value="${esc(c.fin||"")}"></div>
+    </div>
+    <div class="lbl" style="margin-bottom:6px">Modalità</div>
+    <div class="seg"><input type="radio" name="mod" id="em-on" value="online" ${c.mod!=="presenza"?"checked":""}><label for="em-on">Online</label><input type="radio" name="mod" id="em-pr" value="presenza" ${c.mod==="presenza"?"checked":""}><label for="em-pr">In presenza</label></div>
+    <div class="fld"><label for="e-s">Sede</label><input id="e-s" name="sede" list="dl-sedi" value="${esc(c.sede||"")}"></div>
+    <div class="lbl" style="margin-bottom:6px">Stato sul portale</div>
+    <div class="seg"><input type="radio" name="stato" id="es-a" value="aperto" ${c.stato==="aperto"?"checked":""}><label for="es-a">Aperto</label><input type="radio" name="stato" id="es-c" value="chiuso" ${c.stato!=="aperto"?"checked":""}><label for="es-c">Chiuso</label></div>
+    <div class="fld"><label for="e-n">Note</label><textarea id="e-n" name="note">${esc(c.note||"")}</textarea></div>
+    <div class="mfoot">${c.id?`<button type="button" class="btn danger" id="e-del">Elimina</button>`:""}<div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button></div></form>`,
+  (m, close) => {
+    m.querySelector("form").addEventListener("submit", e => {
+      e.preventDefault(); const v = fd(e.target);
+      save(c.id, {k:"ebf", titolo:v.titolo, codice:v.codice, ore:num(v.ore)||"", max:v.max, ini:v.ini, fin:v.fin||v.ini, mod:v.mod, sede:v.sede, stato:v.stato, note:v.note});
+      close(); toast("Corso salvato");
+    });
+    if (c.id) armDelete(m.querySelector("#e-del"), async () => {
+      close();
+      await seq(par().filter(p => p.ebf === c.id), p => patch(p.id, {ebf:null}));
+      del(c.id); toast("Corso eliminato: gli iscritti tornano da smistare");
+    });
+  });
+}
+
+function settingsModal(){
+  const C = cfg();
+  openModal(`<form><h2>Tariffe e pagamenti</h2>
+    <div class="hint">Valori proposti in automatico per le nuove docenze. Su ogni docenza puoi sempre cambiare la tariffa (es. trasferte fuori Roma).</div>
+    ${FATT_AZ.map(k => `<div class="card" style="margin-bottom:10px;border-left:4px solid ${C[k].c}">
+      <div style="font-weight:700;margin-bottom:8px">${esc(C[k].full)}</div>
+      <div class="row">
+        <div class="fld"><label for="s-${k}-t">€/h online</label><input id="s-${k}-t" type="number" step="0.5" name="${k}.tariffa" value="${esc(C[k].tariffa)}"></div>
+        <div class="fld"><label for="s-${k}-p">€/h in presenza</label><input id="s-${k}-p" type="number" step="0.5" name="${k}.tariffaPres" value="${esc(C[k].tariffaPres)}"></div>
+        <div class="fld"><label for="s-${k}-g">Paga a (giorni)</label><input id="s-${k}-g" type="number" name="${k}.gg" value="${esc(C[k].gg ?? "")}" placeholder="non noto"></div>
+      </div>
+      <div class="fld"><label for="s-${k}-f">Fatturazione</label><select id="s-${k}-f" name="${k}.fatt"><option value="mensile" ${C[k].fatt==="mensile"?"selected":""}>Mensile (fattura unica a fine mese)</option><option value="docenza" ${C[k].fatt==="docenza"?"selected":""}>A ogni docenza</option></select></div>
+    </div>`).join("")}
+    <div class="small muted" style="margin:6px 0">${auth && auth.currentUser ? "Accesso come " + esc(auth.currentUser.email) : ""}</div>
+    <div class="mfoot">${auth && auth.currentUser ? `<button type="button" class="btn" id="s-out">Esci</button>` : ""}<div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button></div></form>`,
+  (m, close) => {
+    const out = m.querySelector("#s-out"); if (out) out.addEventListener("click", () => { close(); signOut(auth); });
+    m.querySelector("form").addEventListener("submit", e => {
+      e.preventDefault(); const v = fd(e.target); const az = {};
+      FATT_AZ.forEach(k => { az[k] = {tariffa:num(v[k+".tariffa"]), tariffaPres:num(v[k+".tariffaPres"]), gg: v[k+".gg"]==="" ? null : num(v[k+".gg"]), fatt:v[k+".fatt"]}; });
+      save("settings", {k:"cfg", az}); close(); toast("Impostazioni salvate");
+    });
+  });
+}
+
+/* ---------- copia ---------- */
+function copyText(txt){
+  const done = () => toast("Copiato: incollalo nel programma di fatturazione");
+  const fallback = () => openModal(`<h2>Riepilogo</h2><div class="hint">Seleziona e copia il testo.</div><div class="fld"><textarea style="min-height:240px" readonly>${esc(txt)}</textarea></div><div class="mfoot"><div class="spacer"></div><button class="btn" data-close>Chiudi</button></div>`);
+  try { navigator.clipboard.writeText(txt).then(done, fallback); } catch(e){ fallback(); }
+}
+function riepilogo(az){
+  const C = cfg(), a = C[az];
+  const ls = lez().filter(l => l.az === az && ym(l.data) === ui.fattMonth).sort(sortLez);
+  const rows = ls.map(l => `${fmtD(l.data)} · ${l.titolo||"Docenza"}${l.cliente?" ("+l.cliente+")":""} · ${l.mod==="presenza"?(l.sede||"in presenza"):"online"} · ${oreF(l.ore)} × ${eur(l.tariffa)} = ${eur(lezImporto(l))}`);
+  return `${a.full} · Riepilogo docenze ${meseNome(ui.fattMonth)}\n\n${rows.join("\n")}\n\nTotale: ${oreF(ls.reduce((s,l)=>s+num(l.ore),0))} · ${eur(ls.reduce((s,l)=>s+lezImporto(l),0))}`;
+}
+
+/* ---------- eventi ---------- */
+let toastT;
+function toast(msg){
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role","status"); t.textContent = msg;
+  document.body.appendChild(t); clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 2600);
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el || el.tagName === "SELECT" || (el.tagName === "INPUT")) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  switch(act){
+    case "calprev": ui.calMonth = addMonths(ui.calMonth,-1); render(); break;
+    case "calnext": ui.calMonth = addMonths(ui.calMonth, 1); render(); break;
+    case "caltoday": ui.calMonth = today().slice(0,7); ui.selDay = today(); render(); break;
+    case "selday": ui.selDay = el.dataset.d; if (ym(el.dataset.d) !== ui.calMonth) ui.calMonth = ym(el.dataset.d); render(); break;
+    case "filter": { const k = el.dataset.az; ui.filters.has(k) ? ui.filters.delete(k) : ui.filters.add(k); if (!ui.filters.size) AZ_KEYS.forEach(x => ui.filters.add(x)); render(); break; }
+    case "newlez": lezModal({data: el.dataset.d || ui.selDay}); break;
+    case "editlez": { const l = items.get(id); if (l) lezModal({...l}); break; }
+    case "fprev": ui.fattMonth = addMonths(ui.fattMonth,-1); render(); break;
+    case "fnext": ui.fattMonth = addMonths(ui.fattMonth, 1); render(); break;
+    case "gomese": ui.fattMonth = el.dataset.m; if (ui.tab === "fatture") render(); break;
+    case "newfat": fatModal(el.dataset.az, el.dataset.ids.split(",").filter(Boolean)); break;
+    case "editfat": { const f = items.get(id); if (f) fatModal(f.az, f.lez||[], f); break; }
+    case "paga": ask("Fattura saldata", [{n:"d", l:"Data del pagamento", t:"date", v:today(), req:true}], "Segna saldata").then(v => { patch(id, {pagata:v.d}); toast("Pagamento registrato"); }); break;
+    case "copia": copyText(riepilogo(el.dataset.az)); break;
+    case "togglefatt": ui.fattShowAll = !ui.fattShowAll; render(); break;
+    case "newprev": prevModal(); break;
+    case "editprev": { const p = items.get(id); if (p) prevModal({...p}); break; }
+    case "prevconcluso": patch(id, {stato:"concluso"}); toast("Corsi segnati come svolti"); break;
+    case "prevfatt": { const p = items.get(id); ask(`Fattura a ${p.cliente}`, [{n:"num", l:"Numero fattura"}, {n:"d", l:"Data emissione", t:"date", v:today(), req:true}], "Registra").then(v => { patch(id, {fattNum:v.num, fattData:v.d}); toast("Fattura registrata"); }); break; }
+    case "prevsaldo": ask("Preventivo saldato", [{n:"d", l:"Data del pagamento", t:"date", v:today(), req:true}], "Segna saldato").then(v => { patch(id, {saldato:v.d}); toast("Saldo registrato"); }); break;
+    case "prevatt": (async () => { await patch(id, {attestatiEmessi:true}); await seq(par().filter(x => x.prev === id && !x.attestato), x => patch(x.id, {attestato:true})); toast("Attestati segnati come emessi"); })(); break;
+    case "addpar": addParModal(id); break;
+    case "iscritti": addParModal(null, id); break;
+    case "dacliente": pickModal(id); break;
+    case "togglepapa": ui.papaShowClosed = !ui.papaShowClosed; render(); break;
+    case "newebf": ebfModal(); break;
+    case "editebf": { const c = items.get(id); if (c) ebfModal({...c}); break; }
+    case "newpar": parModal(); break;
+    case "editpar": { const x = items.get(id); if (x) parModal({...x}); break; }
+    case "unassign": patch(id, {ebf:null}); toast("Partecipante rimesso tra i da smistare"); break;
+    case "chiudiebf": patch(id, {stato:"chiuso"}); toast("Corso chiuso: ora segna gli attestati"); break;
+    case "attall": (async () => { await seq(par().filter(p => p.ebf === id && !p.attestato), p => patch(p.id, {attestato:true})); toast("Attestati segnati per tutti"); })(); break;
+    case "copiaebf": { const c = items.get(id); const ps = par().filter(p => p.ebf === id); copyText(`${c.titolo}${c.codice?" (ID "+c.codice+")":""}\nCognome; Nome; Luogo di nascita; Data di nascita; Codice fiscale; Azienda\n\n${ps.map(p => { const pr = p.prev && items.get(p.prev); return [p.cognome||"", p.nome||"", p.luogoNascita||"", fmtD(p.dataNascita), p.cf||"", (pr && pr.cliente)||""].join("; "); }).join("\n")}`); break; }
+    case "toggleebf": ui.ebfShowClosed = !ui.ebfShowClosed; render(); break;
+  }
+});
+document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset.act === "assegna" && el.value){ patch(el.dataset.id, {ebf: el.value}); toast("Partecipante assegnato"); }
+  if (el.dataset.act === "att"){ patch(el.dataset.id, {attestato: el.checked}); }
+});
+$("#fab").addEventListener("click", () => lezModal({data: ui.tab === "calendario" ? ui.selDay : today()}));
+$("#btn-settings").addEventListener("click", settingsModal);
+function route(){
+  const h = location.hash.replace("#","");
+  ui.tab = TABS.some(t => t.id === h) ? h : "calendario";
+  render(); window.scrollTo(0,0);
+}
+window.addEventListener("hashchange", route);
+route();
+
+/* ---------- avvio: Firebase ---------- */
+let auth = null, fs = null, unsub = null;
+const configured = firebaseConfig && firebaseConfig.apiKey && !String(firebaseConfig.apiKey).startsWith("INSERISCI");
+function showLogin(show){ $("#login").hidden = !show; }
+const errIt = e => ({
+  "auth/invalid-credential":"Email o password non corretti.", "auth/wrong-password":"Password non corretta.", "auth/user-not-found":"Nessun account con questa email: premi «Crea account».",
+  "auth/email-already-in-use":"Esiste già un account con questa email: premi «Accedi».", "auth/weak-password":"La password deve avere almeno 6 caratteri.",
+  "auth/invalid-email":"Email non valida.", "auth/network-request-failed":"Serve la connessione per il primo accesso. Riprova quando sei online.",
+  "auth/too-many-requests":"Troppi tentativi: riprova tra qualche minuto.", "auth/operation-not-allowed":"Accesso con email non attivato in Firebase (Authentication → Email/Password)."
+}[e && e.code] || "Qualcosa non ha funzionato. Riprova.");
+if (!configured){ mode = "local"; render(); }
+else {
+  const app = initializeApp(firebaseConfig);
+  try { auth = initializeAuth(app, {persistence:[indexedDBLocalPersistence, browserLocalPersistence]}); } catch(e){ auth = getAuth(app); }
+  try { fs = initializeFirestore(app, {localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})}); }
+  catch(e){ fs = getFirestore(app); }
+  const lf = $("#f-login"), err = $("#lg-err");
+  const creds = () => [lf.elements.email.value.trim(), lf.elements.password.value];
+  lf.addEventListener("submit", e => { e.preventDefault(); err.textContent = ""; const [em,pw] = creds(); signInWithEmailAndPassword(auth, em, pw).catch(x => err.textContent = errIt(x)); });
+  $("#lg-new").addEventListener("click", () => { err.textContent = ""; const [em,pw] = creds(); if (!em || pw.length < 6){ err.textContent = "Scrivi email e una password di almeno 6 caratteri."; return; } createUserWithEmailAndPassword(auth, em, pw).catch(x => err.textContent = errIt(x)); });
+  $("#lg-reset").addEventListener("click", () => { const [em] = creds(); if (!em){ err.textContent = "Scrivi prima la tua email."; return; } sendPasswordResetEmail(auth, em).then(() => err.textContent = "Ti ho inviato un'email per reimpostare la password.", x => err.textContent = errIt(x)); });
+  onAuthStateChanged(auth, u => {
+    if (unsub){ unsub(); unsub = null; }
+    if (!u){ items = new Map(); col = null; mode = "loading"; render(); showLogin(true); return; }
+    showLogin(false);
+    col = collection(fs, "users", u.uid, "items");
+    unsub = onSnapshot(col, {includeMetadataChanges:true}, snap => {
+      mode = "cloud"; pendingWrites = snap.metadata.hasPendingWrites;
+      const m = new Map(); snap.docs.forEach(d => m.set(d.id, {id:d.id, ...d.data()}));
+      items = m; render();
+    }, e => { toast(e && e.code === "permission-denied" ? "Accesso ai dati negato: controlla le regole di Firestore." : "Non riesco a leggere i dati. Riprova più tardi."); });
+  });
+}
+window.addEventListener("online", render);
+window.addEventListener("offline", render);
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+</script>
+</body>
+</html>
