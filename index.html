@@ -19,7 +19,7 @@
 :root{
   --bg:#f3f4f7; --surface:#ffffff; --surface-2:#f8f9fb; --ink:#1a2230; --muted:#5f6b7b; --line:#dfe3ea;
   --accent:#22324a; --accent-ink:#ffffff;
-  --c-scilla:#8b4cc6; --c-bioinvent:#2e6bd3; --c-cmb:#dd7417; --c-papa:#2b9a5a;
+  --c-scilla:#8b4cc6; --c-bioinvent:#2e6bd3; --c-cmb:#dd7417; --c-studioeffe:#c93a6a; --c-papa:#2b9a5a;
   --ok:#23804a; --warn:#b77800; --bad:#c0392b; --info:#2e6bd3;
   --ok-bg:#e5f4eb; --warn-bg:#fdf1d8; --bad-bg:#fbe5e2; --info-bg:#e6eefb;
   --font-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
@@ -31,7 +31,7 @@
   :root:not([data-theme="light"]){
     --bg:#12161d; --surface:#1a2029; --surface-2:#202733; --ink:#e7ebf1; --muted:#9aa5b4; --line:#2d3644;
     --accent:#c9d6ea; --accent-ink:#12161d;
-    --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-papa:#4cc07e;
+    --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-studioeffe:#ec6f98; --c-papa:#4cc07e;
     --ok:#55c483; --warn:#e6ac3a; --bad:#ef6b5c; --info:#6c9ff0;
     --ok-bg:#16301f; --warn-bg:#332811; --bad-bg:#3a1c19; --info-bg:#172540;
     color-scheme: dark;
@@ -40,7 +40,7 @@
 :root[data-theme="dark"]{
   --bg:#12161d; --surface:#1a2029; --surface-2:#202733; --ink:#e7ebf1; --muted:#9aa5b4; --line:#2d3644;
   --accent:#c9d6ea; --accent-ink:#12161d;
-  --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-papa:#4cc07e;
+  --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-studioeffe:#ec6f98; --c-papa:#4cc07e;
   --ok:#55c483; --warn:#e6ac3a; --bad:#ef6b5c; --info:#6c9ff0;
   --ok-bg:#16301f; --warn-bg:#332811; --bad-bg:#3a1c19; --info-bg:#172540;
   color-scheme: dark;
@@ -130,6 +130,7 @@ main{max-width:1180px;margin:0 auto;padding:16px max(16px, env(safe-area-inset-l
 .lrow.opz .bar{background:repeating-linear-gradient(180deg,var(--c) 0 4px,transparent 4px 7px)}
 .opzrow{display:flex;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px;flex-wrap:wrap}
 .opzrow .d{flex:1;min-width:120px}
+.ev.doc{font-style:italic;background:color-mix(in srgb, var(--c) 7%, transparent);border-left-style:double;border-left-width:4px}
 .more{font-size:11px;color:var(--muted);padding-left:4px}
 @media (max-width:640px){
   .ev.opz{background:transparent;border:1px dashed var(--c);height:6px}
@@ -254,13 +255,14 @@ import { initializeApp, initializeAuth, getAuth, indexedDBLocalPersistence, brow
 import { firebaseConfig } from "./firebase-config.js";
 /* ---------- costanti ---------- */
 const AZ_BASE = {
-  scilla:   {nome:"Scilla",    full:"Scilla Società Benefit", c:"var(--c-scilla)",    tariffa:25, tariffaPres:25, fatt:"docenza",   gg:null},
-  bioinvent:{nome:"BioInvent", full:"BioInvent SRL",          c:"var(--c-bioinvent)", tariffa:25, tariffaPres:25, fatt:"mensile",   gg:10},
-  cmb:      {nome:"CMB",       full:"CMB Consulting",         c:"var(--c-cmb)",       tariffa:30, tariffaPres:40, fatt:"mensile",   gg:30},
+  scilla:   {nome:"Scilla",    full:"Scilla Società Benefit", c:"var(--c-scilla)",    tariffa:25, tariffaPres:25, tariffaFuori:25, fatt:"docenza", gg:null, docs:true, docSenza:null, docRoma:null},
+  bioinvent:{nome:"BioInvent", full:"BioInvent SRL",          c:"var(--c-bioinvent)", tariffa:25, tariffaPres:25, tariffaFuori:25, fatt:"mensile", gg:10},
+  cmb:      {nome:"CMB",       full:"CMB Consulting",         c:"var(--c-cmb)",       tariffa:30, tariffaPres:40, tariffaFuori:40, fatt:"mensile", gg:30},
+  studioeffe:{nome:"Studioeffe", full:"Studioeffe",           c:"var(--c-studioeffe)",tariffa:25, tariffaPres:30, tariffaFuori:35, fatt:"mensile", gg:30, docs:true, docSenza:150, docRoma:250},
   papa:     {nome:"Con papà",  full:"Clienti con papà",       c:"var(--c-papa)",      tariffa:0,  tariffaPres:0,  fatt:"preventivo",gg:null}
 };
-const AZ_KEYS = ["scilla","bioinvent","cmb","papa"];
-const FATT_AZ = ["scilla","bioinvent","cmb"];
+const AZ_KEYS = ["scilla","bioinvent","cmb","studioeffe","papa"];
+const FATT_AZ = ["scilla","bioinvent","cmb","studioeffe"];
 const TITOLI_BASE = ["Formazione lavoratori - parte generale","Formazione specifica - rischio basso","Formazione specifica - rischio medio","Formazione specifica - rischio alto","RLS","Aggiornamento RLS","Preposti","Aggiornamento preposti","Datore di lavoro","RSPP datore di lavoro"];
 const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GGS = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
@@ -327,7 +329,17 @@ function cfg(){
   }
   return out;
 }
-const lezImporto = l => l.az === "papa" ? 0 : num(l.ore) * num(l.tariffa);
+const docs = () => byKind("doc");
+const lezImporto = l => l.k === "doc" ? num(l.compenso) + num(l.rimborso) : l.az === "papa" ? 0 : num(l.ore) * num(l.tariffa) + num(l.rimborso);
+const isBill = x => x.k === "doc" ? x.stato === "consegnato" : !x.opz;
+const voci = () => [...lez().filter(l => !l.opz), ...docs().filter(d => d.stato === "consegnato")];
+const isPres = m => m === "presenza" || m === "fuori";
+const modLabel = l => l.mod === "fuori" ? (l.sede || "Fuori Roma") : l.mod === "presenza" ? (l.sede || "In presenza") : "Online";
+const tarFor = (a, mod) => mod === "fuori" ? (a.tariffaFuori ?? a.tariffaPres) : mod === "presenza" ? a.tariffaPres : a.tariffa;
+const DOC_TIPI = ["DVR","Aggiornamento DVR","Altro documento"];
+const SOPR = {no:"Senza sopralluogo", roma:"Sopralluogo a Roma", fuori:"Sopralluogo fuori Roma"};
+const docTipo = d => d.tipo === "Altro documento" ? (d.descr || "Documento") : (d.tipo || "DVR");
+const docLabel = d => docTipo(d) + (d.cliente ? " · " + d.cliente : "");
 const sortLez = (a,b) => (a.data+(a.ini||"")).localeCompare(b.data+(b.ini||""));
 
 /* ---------- salvataggio (funziona anche offline: Firebase tiene una copia locale e sincronizza dopo) ---------- */
@@ -359,21 +371,27 @@ async function seq(list, fn){ for (const x of list) await fn(x); }
 function alerts(){
   const t = today(), C = cfg(), out = [];
   for (const az of FATT_AZ.filter(a => C[a].fatt === "mensile")){
-    const pend = lez().filter(l => !l.opz && l.az === az && !l.fat && l.data <= t);
+    const pend = voci().filter(l => l.az === az && !l.fat && l.data <= t);
     const months = [...new Set(pend.map(l => ym(l.data)))].sort();
     for (const m of months){
       const ls = pend.filter(l => ym(l.data) === m);
       const h = ls.reduce((s,l)=>s+num(l.ore),0), e = ls.reduce((s,l)=>s+lezImporto(l),0);
       const last = lastDay(m);
-      if (t > last) out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${C[az].full} di ${meseNome(m)}`, s:`${plural(ls.length,"docenza","docenze")} · ${oreF(h)} · ${eur(e)}`, mese:m});
+      if (t > last) out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${C[az].full} di ${meseNome(m)}`, s:`${plural(ls.length,"attività","attività")} · ${oreF(h)} · ${eur(e)}`, mese:m});
       else if (daysBetween(t,last) <= 3) out.push({tab:"fatture", lvl:"info", t:`Fine mese: prepara la fattura ${C[az].full}`, s:`Finora ${oreF(h)} · ${eur(e)} a ${meseNome(m)}`, mese:m});
     }
   }
   for (const az of FATT_AZ.filter(a => C[a].fatt === "docenza")){
-    lez().filter(l => !l.opz && l.az === az && !l.fat && l.data <= t).sort(sortLez).forEach(l => {
-      out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${C[az].full} per la docenza del ${fmtD(l.data)}`, s:`${l.titolo||"Docenza"} · ${oreF(l.ore)} · ${eur(lezImporto(l))}`, mese:ym(l.data)});
+    voci().filter(l => l.az === az && !l.fat && l.data <= t).sort(sortLez).forEach(l => {
+      out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${C[az].full} per ${l.k==="doc" ? docTipo(l) + " consegnato il" : "la docenza del"} ${fmtD(l.data)}`, s:`${l.k==="doc" ? (l.cliente||"Documento") : (l.titolo||"Docenza") + " · " + oreF(l.ore)} · ${eur(lezImporto(l))}`, mese:ym(l.data)});
     });
   }
+  docs().filter(d => d.stato === "consegnato" && !d.fat && !num(d.compenso)).forEach(d => {
+    out.push({tab:"fatture", lvl:"warn", t:`Indica il compenso concordato: ${docLabel(d)}`, s:`${(C[d.az]||C.scilla).full} · consegnato il ${fmtD(d.data)}`, mese:ym(d.data)});
+  });
+  docs().filter(d => d.stato !== "consegnato" && d.data && d.data < t).forEach(d => {
+    out.push({tab:"fatture", lvl:"info", t:`Documento oltre la data prevista: ${docLabel(d)}`, s:`${(C[d.az]||C.scilla).full} · previsto il ${fmtD(d.data)} · segnalo come consegnato quando lo invii`});
+  });
   fat().filter(f => !f.pagata && f.scad).forEach(f => {
     const d = daysBetween(t, f.scad), n = C[f.az] ? C[f.az].full : "";
     if (d < 0) out.push({tab:"fatture", lvl:"bad", t:`Pagamento in ritardo: fattura ${f.numero?("n. "+f.numero+" "):""}${n}`, s:`${eur(f.importo)} · scaduta il ${fmtD(f.scad)} (${plural(-d,"giorno","giorni")} fa)`});
@@ -433,11 +451,22 @@ function updateDatalists(){
 function lezRow(l, opts={}){
   const C = cfg(), a = C[l.az] || C.scilla;
   const p = l.prev && items.get(l.prev);
-  const meta = [l.ini && l.fin ? `${l.ini}–${l.fin}` : "", oreF(l.ore), l.mod === "presenza" ? (l.sede || "In presenza") : "Online", l.cliente || (p && p.cliente) || ""].filter(Boolean).join(" · ");
+  const meta = [l.ini && l.fin ? `${l.ini}–${l.fin}` : "", oreF(l.ore), modLabel(l), l.cliente || (p && p.cliente) || ""].filter(Boolean).join(" · ");
   return `<button class="lrow ${l.opz?"opz":""}" style="--c:${a.c}" data-act="editlez" data-id="${l.id}">
     <span class="bar"></span>
     <span class="b"><span class="tt">${esc(l.titolo || "Docenza")}</span><span class="meta">${opts.date?esc(fmtDshort(l.data))+" · ":""}${esc(meta)}</span></span>
     <span class="r"><div style="font-weight:600">${esc(a.nome)}</div>${l.az!=="papa"?`<div class="muted num">${eur(lezImporto(l))}</div>`:""}${l.fat?`<span class="pill ok">fatturata</span>`:""}${l.opz?`<span class="pill warn">opzionata</span>`:""}</span>
+  </button>`;
+}
+
+function docRow(d){
+  const C = cfg(), a = C[d.az] || C.scilla;
+  const sopr = d._ev === "sopr";
+  const meta = [sopr ? (d.soprIni || "") : (d.stato === "consegnato" ? "Consegnato" : "Consegna prevista"), SOPR[d.sopr||"no"], d.cliente].filter(Boolean).join(" · ");
+  return `<button class="lrow" style="--c:${a.c}" data-act="editdoc" data-id="${d.id}">
+    <span class="bar" style="background:repeating-linear-gradient(180deg,var(--c) 0 2px,transparent 2px 4px)"></span>
+    <span class="b"><span class="tt">${sopr ? "Sopralluogo · " : ""}${esc(docTipo(d))}</span><span class="meta">${esc(meta)}</span></span>
+    <span class="r"><div style="font-weight:600">${esc(a.nome)}</div><div class="muted num">${num(d.compenso)?eur(lezImporto(d)):"da concordare"}</div>${d.fat?`<span class="pill ok">fatturato</span>`:d.stato==="consegnato"?`<span class="pill info">consegnato</span>`:`<span class="pill neutral">in lavorazione</span>`}</span>
   </button>`;
 }
 
@@ -453,6 +482,10 @@ function renderCal(al){
   const vis = lez().filter(l => ui.filters.has(l.az));
   const byDay = {};
   vis.forEach(l => (byDay[l.data] = byDay[l.data] || []).push(l));
+  docs().filter(d => ui.filters.has(d.az)).forEach(d => {
+    if (d.data) (byDay[d.data] = byDay[d.data] || []).push({...d, _ev:"cons"});
+    if (d.sopr && d.sopr !== "no" && d.soprData) (byDay[d.soprData] = byDay[d.soprData] || []).push({...d, _ev:"sopr", ini:d.soprIni||""});
+  });
   Object.values(byDay).forEach(a => a.sort(sortLez));
   const mesLez = lez().filter(l => !l.opz && ym(l.data) === ui.calMonth);
 
@@ -479,7 +512,9 @@ function renderCal(al){
     const evs = byDay[d] || [];
     const cls = ["day", ym(d)!==ui.calMonth?"out":"", d===t?"today":"", d===ui.selDay?"sel":""].join(" ");
     h += `<button class="${cls}" data-act="selday" data-d="${d}" aria-label="${esc(fmtDay(d))}, ${plural(evs.length,"docenza","docenze")}"><span class="n num">${parse(d).getDate()}</span>`;
-    evs.slice(0,3).forEach(l => { h += `<span class="ev ${l.opz?"opz":""}" style="--c:${C[l.az].c}">${esc((l.opz?"? ":"")+(l.ini?l.ini+" ":"")+(l.titolo||C[l.az].nome))}</span>`; });
+    evs.slice(0,3).forEach(l => { h += l.k === "doc"
+      ? `<span class="ev doc" style="--c:${C[l.az].c}">${esc((l._ev==="sopr" ? "Sopralluogo " : "") + docTipo(l))}</span>`
+      : `<span class="ev ${l.opz?"opz":""}" style="--c:${C[l.az].c}">${esc((l.opz?"? ":"")+(l.ini?l.ini+" ":"")+(l.titolo||C[l.az].nome))}</span>`; });
     if (evs.length > 3) h += `<span class="more">+${evs.length-3}</span>`;
     h += `</button>`;
   }
@@ -489,7 +524,7 @@ function renderCal(al){
   const next = vis.filter(l => !l.opz && l.data > ui.selDay).sort(sortLez).slice(0,6);
   h += `<aside class="agenda">
     <div class="section-h"><h3>${esc(fmtDay(ui.selDay))}</h3><div class="spacer"></div><button class="btn sm primary" data-act="newlez" data-d="${ui.selDay}">+ Docenza</button></div>
-    ${dayL.length ? dayL.map(l => lezRow(l)).join("") : `<div class="empty">Nessuna docenza in questa giornata.</div>`}
+    ${dayL.length ? dayL.map(l => l.k === "doc" ? docRow(l) : lezRow(l)).join("") : `<div class="empty">Nessuna attività in questa giornata.</div>`}
     ${opzHtml()}
     <h3 style="margin-top:10px">Prossime docenze</h3>
     ${next.length ? next.map(l => lezRow(l,{date:true})).join("") : `<div class="empty">Nessuna docenza in programma dopo questa data.</div>`}
@@ -527,8 +562,9 @@ function confermaOpz(id){
 
 function renderFatt(al){
   const C = cfg(), M = ui.fattMonth, t = today();
-  const ml = lez().filter(l => !l.opz && ym(l.data) === M);
-  const yl = lez().filter(l => !l.opz && l.data.slice(0,4) === M.slice(0,4));
+  const mlAll = [...lez().filter(l => !l.opz), ...docs()].filter(x => x.data && ym(x.data) === M);
+  const ml = mlAll.filter(isBill);
+  const yl = voci().filter(l => l.data.slice(0,4) === M.slice(0,4));
   let h = `<div class="calbar">
     <button class="iconbtn" data-act="fprev" aria-label="Mese precedente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 6l-6 6 6 6"/></svg></button>
     <h2>${esc(meseNome(M)[0].toUpperCase()+meseNome(M).slice(1))}</h2>
@@ -542,33 +578,47 @@ function renderFatt(al){
   </div></div>`;
   const fa = al.filter(a => a.tab === "fatture");
   if (fa.length) h += `<div class="section"><div class="section-h"><h2>Da fare</h2></div>${alertsHtml(fa,false)}</div>`;
+  const inLav = docs().filter(d => d.stato !== "consegnato").sort(sortLez);
+  h += `<div class="section"><div class="section-h"><h2>Documenti in lavorazione</h2><span class="pill neutral">${inLav.length}</span><div class="spacer"></div><button class="btn sm" data-act="newdoc">+ Documento</button></div>
+    ${inLav.length ? `<div class="card">${inLav.map(d => { const a = C[d.az] || C.scilla; return `<div class="prow"><span class="dot" style="background:${a.c}"></span><span class="nm" data-act="editdoc" data-id="${d.id}" style="cursor:pointer"><b>${esc(docLabel(d))}</b><div class="small muted">${esc([a.nome, SOPR[d.sopr||"no"], d.soprData?"sopralluogo "+fmtD(d.soprData):"", d.data?"consegna prevista "+fmtD(d.data):"", num(d.compenso)?eur(lezImporto(d)):"compenso da concordare"].filter(Boolean).join(" · "))}</div></span><button class="btn sm primary" data-act="docok" data-id="${d.id}">Segna consegnato</button></div>`; }).join("")}</div>` : `<div class="small muted">Nessun DVR o documento in corso. Quando Studioeffe o Scilla te ne assegnano uno, premi «+ Documento».</div>`}</div>`;
 
-  h += `<div class="section"><div class="section-h"><h2>Docenze di ${esc(MESI[parseInt(M.slice(5))-1])}</h2></div>`;
+  h += `<div class="section"><div class="section-h"><h2>Attività di ${esc(MESI[parseInt(M.slice(5))-1])}</h2></div>`;
   for (const az of FATT_AZ){
     const a = C[az];
-    const ls = ml.filter(l => l.az === az).sort(sortLez);
-    const open = ls.filter(l => !l.fat);
+    const ls = mlAll.filter(l => l.az === az).sort(sortLez);
+    const bill = ls.filter(isBill);
+    const open = bill.filter(l => !l.fat);
     const openDone = open.filter(l => l.data <= t);
-    const hh = ls.reduce((s,l)=>s+num(l.ore),0), ee = ls.reduce((s,l)=>s+lezImporto(l),0);
-    const regola = a.fatt === "mensile" ? `Fattura mensile · pagamento a ${a.gg} giorni` : "Fattura a ogni docenza";
+    const hh = ls.reduce((s,l)=>s+num(l.ore),0), ee = bill.reduce((s,l)=>s+lezImporto(l),0);
+    const regola = a.fatt === "mensile" ? `Fattura mensile${a.gg!=null?` · pagamento a ${a.gg} giorni`:""}` : "Fattura a ogni attività";
     h += `<div class="card azcard" style="--c:${a.c}">
       <div class="azcard-h"><span class="dot" style="background:${a.c}"></span><h3>${esc(a.full)}</h3><span class="pill neutral">${esc(regola)}</span><div class="spacer"></div>
-      ${ls.length && a.fatt === "mensile" ? `<button class="btn sm" data-act="copia" data-az="${az}">Copia riepilogo</button>` : ""}
+      ${a.docs ? `<button class="btn sm" data-act="newdoc" data-az="${az}">+ Documento</button>` : ""}
+      ${bill.length && a.fatt === "mensile" ? `<button class="btn sm" data-act="copia" data-az="${az}">Copia riepilogo</button>` : ""}
       ${a.fatt === "mensile" && open.length ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${open.map(l=>l.id).join(",")}">Registra fattura</button>` : ""}
       </div>`;
-    if (!ls.length) h += `<div class="small muted">Nessuna docenza a ${esc(meseNome(M))}.</div>`;
+    if (!ls.length) h += `<div class="small muted">Nessuna attività a ${esc(meseNome(M))}.</div>`;
     else {
-      h += `<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Corso</th><th class="r">Ore</th><th class="r">€/h</th><th class="r">Importo</th><th>Stato</th></tr></thead><tbody>`;
+      h += `<div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Attività</th><th class="r">Ore</th><th class="r">€/h</th><th class="r">Importo</th><th>Stato</th></tr></thead><tbody>`;
       ls.forEach(l => {
         const f = l.fat && items.get(l.fat);
+        if (l.k === "doc"){
+          const stD = f ? `<span class="pill ${f.pagata?"ok":"info"}">${f.pagata?"saldata":"fatturata"}${f.numero?" n. "+esc(f.numero):""}</span>`
+            : l.stato !== "consegnato" ? `<span class="pill neutral">in lavorazione</span>`
+            : !num(l.compenso) ? `<span class="pill warn">compenso da definire</span>`
+            : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Registra fattura</button>`
+            : `<span class="pill warn">da fatturare</span>`;
+          h += `<tr class="click" data-act="editdoc" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(docTipo(l))}<div class="small muted">${esc([l.cliente, SOPR[l.sopr||"no"], num(l.rimborso)?"rimborso "+eur(l.rimborso):""].filter(Boolean).join(" · "))}</div></td><td class="r muted">—</td><td class="r muted">—</td><td class="r num">${isBill(l)?eur(lezImporto(l)):`<span class="muted">${num(l.compenso)?eur(lezImporto(l)):"—"}</span>`}</td><td>${stD}</td></tr>`;
+          return;
+        }
         const st = f ? `<span class="pill ${f.pagata?"ok":"info"}">${f.pagata?"saldata":"fatturata"}${f.numero?" n. "+esc(f.numero):""}</span>`
           : l.data > t ? `<span class="pill neutral">in programma</span>`
           : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Registra fattura</button>`
           : `<span class="pill warn">da fatturare</span>`;
-        h += `<tr class="click" data-act="editlez" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(l.titolo||"Docenza")}<div class="small muted">${esc([l.mod==="presenza"?(l.sede||"In presenza"):"Online", l.cliente].filter(Boolean).join(" · "))}</div></td><td class="r num">${oreF(l.ore)}</td><td class="r num">${eur(l.tariffa)}</td><td class="r num">${eur(lezImporto(l))}</td><td>${st}</td></tr>`;
+        h += `<tr class="click" data-act="editlez" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(l.titolo||"Docenza")}<div class="small muted">${esc([modLabel(l), l.cliente, num(l.rimborso)?"rimborso "+eur(l.rimborso):""].filter(Boolean).join(" · "))}</div></td><td class="r num">${oreF(l.ore)}</td><td class="r num">${eur(l.tariffa)}</td><td class="r num">${eur(lezImporto(l))}</td><td>${st}</td></tr>`;
       });
       h += `</tbody><tfoot><tr><td colspan="2">Totale</td><td class="r num">${oreF(hh)}</td><td></td><td class="r num">${eur(ee)}</td><td></td></tr></tfoot></table></div>`;
-      if (a.fatt === "mensile" && openDone.length && openDone.length < open.length) h += `<div class="small muted" style="margin-top:6px">Alcune docenze del mese sono ancora in programma: registra la fattura a fine mese.</div>`;
+      if (a.fatt === "mensile" && openDone.length && openDone.length < open.length) h += `<div class="small muted" style="margin-top:6px">Alcune attività del mese sono ancora in programma: registra la fattura a fine mese.</div>`;
     }
     h += `</div>`;
   }
@@ -587,7 +637,7 @@ function renderFatt(al){
       if (f.pagata) st = `<span class="pill ok">saldata il ${fmtD(f.pagata)}</span>`;
       else if (f.scad){ const d = daysBetween(t, f.scad); st = d < 0 ? `<span class="pill bad">scaduta il ${fmtD(f.scad)}</span>` : `<span class="pill ${d<=5?"warn":"neutral"}">attesa entro il ${fmtD(f.scad)}</span>`; }
       else st = `<span class="pill neutral">in attesa</span>`;
-      h += `<tr><td><span class="dot" style="background:${a.c}"></span> ${esc(a.nome)}<div class="small muted">${esc(f.mese ? meseNome(f.mese) : "")} · ${plural((f.lez||[]).length,"docenza","docenze")}</div></td><td>${esc(f.numero||"—")}</td><td class="num">${fmtD(f.emessa)}</td><td class="r num">${eur(f.importo)}</td><td>${st}</td>
+      h += `<tr><td><span class="dot" style="background:${a.c}"></span> ${esc(a.nome)}<div class="small muted">${esc(f.mese ? meseNome(f.mese) : "")} · ${plural((f.lez||[]).length,"attività","attività")}</div></td><td>${esc(f.numero||"—")}</td><td class="num">${fmtD(f.emessa)}</td><td class="r num">${eur(f.importo)}</td><td>${st}</td>
         <td class="r"><div class="actions" style="justify-content:flex-end">${f.pagata?"":`<button class="btn sm primary" data-act="paga" data-id="${f.id}">Segna saldata</button>`}<button class="btn sm" data-act="editfat" data-id="${f.id}">Modifica</button></div></td></tr>`;
     });
     h += `</tbody></table></div>`;
@@ -757,13 +807,14 @@ function lezModal(src){
   const C = cfg();
   const l = {az:"scilla", mod:"online", data:ui.selDay, ini:"09:00", fin:"13:00", ...src};
   const isNew = !l.id;
-  if (l.tariffa == null) l.tariffa = l.mod === "presenza" ? C[l.az].tariffaPres : C[l.az].tariffa;
+  if (l.tariffa == null) l.tariffa = tarFor(C[l.az], l.mod);
   if (l.ore == null) l.ore = diffH(l.ini, l.fin);
   const f = l.fat && items.get(l.fat);
   const prevOpts = prev().filter(p => prevStato(p).key !== "chiuso" || p.id === l.prev);
   const ebfOpts = ebf().filter(c => c.stato === "aperto" || c.id === l.ebf);
   openModal(`<form id="f-lez">
     <h2>${isNew ? "Nuova docenza" : "Docenza"}</h2>
+    ${isNew ? `<div class="hint">Devi segnare un DVR o un altro documento? <button type="button" class="btn sm" id="l-todoc">Registra un'attività documentale</button></div>` : ""}
     ${f ? `<div class="banner" style="background:var(--info-bg)">Inclusa nella fattura${f.numero?" n. "+esc(f.numero):""} del ${fmtD(f.emessa)}. Se cambi ore o tariffa, aggiorna anche la fattura.</div>` : ""}
     <div class="lbl" style="margin-bottom:6px">Stato</div>
     <div class="seg"><input type="radio" name="stato" id="st-c" value="conf" ${!l.opz?"checked":""}><label for="st-c">Confermata</label><input type="radio" name="stato" id="st-o" value="opz" ${l.opz?"checked":""}><label for="st-o" style="--c:var(--warn)">Opzionata (da confermare)</label></div>
@@ -778,10 +829,11 @@ function lezModal(src){
     </div>
     <div class="fld"><label for="l-tit">Corso</label>${corsoField("titolo", l.titolo, "l-tit")}</div>
     <div class="lbl" style="margin-bottom:6px">Modalità</div>
-    <div class="seg"><input type="radio" name="mod" id="m-on" value="online" ${l.mod!=="presenza"?"checked":""}><label for="m-on">Online</label><input type="radio" name="mod" id="m-pr" value="presenza" ${l.mod==="presenza"?"checked":""}><label for="m-pr">In presenza</label></div>
+    <div class="seg"><input type="radio" name="mod" id="m-on" value="online" ${!isPres(l.mod)?"checked":""}><label for="m-on">Online</label><input type="radio" name="mod" id="m-pr" value="presenza" ${l.mod==="presenza"?"checked":""}><label for="m-pr">In presenza a Roma</label><input type="radio" name="mod" id="m-fu" value="fuori" ${l.mod==="fuori"?"checked":""}><label for="m-fu">In presenza fuori Roma</label></div>
     <div class="fld" id="w-sede"><label for="l-sede">Sede</label><input id="l-sede" name="sede" value="${esc(l.sede||"")}" placeholder="Es. Passo Corese">${sedeChips("l-sede")}</div>
     <div class="row" id="w-az">
       <div class="fld"><label for="l-tar">Tariffa €/ora</label><input id="l-tar" type="number" step="0.5" min="0" name="tariffa" value="${esc(l.tariffa)}" inputmode="decimal"></div>
+      <div class="fld" id="w-rim"><label for="l-rim">Rimborso spese €</label><input id="l-rim" type="number" step="0.01" min="0" name="rimborso" value="${esc(l.rimborso||"")}" inputmode="decimal" placeholder="da concordare"></div>
       <div class="fld"><label for="l-cli">Cliente finale (facoltativo)</label><input id="l-cli" name="cliente" value="${esc(l.cliente||"")}"></div>
     </div>
     <div class="hint" id="w-imp"></div>
@@ -802,21 +854,24 @@ function lezModal(src){
     const g = n => form.elements[n];
     const refresh = () => {
       const az = form.querySelector("[name=az]:checked").value, mod = form.querySelector("[name=mod]:checked").value;
-      if (!tarManual) g("tariffa").value = mod === "presenza" ? C[az].tariffaPres : C[az].tariffa;
+      if (!tarManual) g("tariffa").value = tarFor(C[az], mod);
       if (!oreManual) g("ore").value = diffH(g("ini").value, g("fin").value);
       m.querySelector("#w-az").style.display = az === "papa" ? "none" : "";
       m.querySelector("#w-papa").style.display = az === "papa" ? "" : "none";
-      m.querySelector("#w-sede").style.display = mod === "presenza" ? "" : "none";
+      m.querySelector("#w-sede").style.display = isPres(mod) ? "" : "none";
+      m.querySelector("#w-rim").style.display = mod === "fuori" ? "" : "none";
       const opz = form.querySelector("[name=stato]:checked").value === "opz";
       m.querySelector("#w-opzhint").style.display = opz ? "" : "none";
       const wa = m.querySelector("#w-altre"); if (wa) wa.style.display = opz ? "" : "none";
-      m.querySelector("#w-imp").textContent = az === "papa" ? "Le docenze con papà si fatturano per cliente nella scheda Papà: qui conto solo le ore." : `Importo: ${eur(num(g("ore").value)*num(g("tariffa").value))}`;
+      m.querySelector("#w-imp").textContent = az === "papa" ? "Le docenze con papà si fatturano per cliente nella scheda Papà: qui conto solo le ore." : `Importo: ${eur(num(g("ore").value)*num(g("tariffa").value) + (mod === "fuori" ? num(g("rimborso").value) : 0))}${mod === "fuori" ? " · fuori Roma tariffa e rimborsi si concordano di volta in volta: controlla i valori" : ""}`;
     };
     form.addEventListener("change", e => { if (e.target.name === "az" || e.target.name === "mod") tarManual = false; refresh(); });
     g("tariffa").addEventListener("input", () => { tarManual = true; refresh(); });
     g("ore").addEventListener("input", () => { oreManual = true; refresh(); });
     g("ini").addEventListener("input", () => { oreManual = false; refresh(); });
     g("fin").addEventListener("input", () => { oreManual = false; refresh(); });
+    const td = m.querySelector("#l-todoc");
+    if (td) td.addEventListener("click", () => { close(); docModal({data: form.elements.data.value || today()}); });
     const al = m.querySelector("#altre-list");
     if (al){
       const addAltra = () => { const d = document.createElement("div"); d.style.cssText = "display:grid;grid-template-columns:1fr 36px;gap:6px";
@@ -827,7 +882,7 @@ function lezModal(src){
     refresh();
     const collect = () => {
       const v = fd(form);
-      const o = {k:"lez", az:v.az, data:v.data, ini:v.ini, fin:v.fin, ore:num(v.ore), titolo:v.titolo, mod:v.mod, sede:v.mod==="presenza"?v.sede:"", note:v.note, opz: v.stato === "opz", grp: l.grp || null};
+      const o = {k:"lez", az:v.az, data:v.data, ini:v.ini, fin:v.fin, ore:num(v.ore), titolo:v.titolo, mod:v.mod, sede:isPres(v.mod)?v.sede:"", rimborso: v.mod==="fuori" && v.az!=="papa" ? num(v.rimborso) : 0, note:v.note, opz: v.stato === "opz", grp: l.grp || null};
       if (v.az === "papa"){ o.tariffa = 0; o.prev = v.prev || null; o.ebf = v.ebf || null; o.cliente = ""; }
       else { o.tariffa = num(v.tariffa); o.cliente = v.cliente; o.prev = null; o.ebf = null; }
       return o;
@@ -857,6 +912,75 @@ function lezModal(src){
   });
 }
 
+function docModal(src){
+  const C = cfg();
+  const d = {az:"studioeffe", tipo:"DVR", sopr:"no", stato:"lavorazione", data:"", cliente:"", ...src};
+  const isNew = !d.id;
+  const azs = FATT_AZ.filter(k => C[k].docs || k === d.az);
+  const defComp = (az, sopr) => sopr === "no" ? C[az].docSenza : sopr === "roma" ? C[az].docRoma : null;
+  if (isNew && (d.compenso == null || d.compenso === "")) d.compenso = defComp(d.az, d.sopr) ?? "";
+  const f = d.fat && items.get(d.fat);
+  openModal(`<form><h2>${isNew ? "Nuova attività documentale" : esc(docTipo(d))}</h2>
+    ${f ? `<div class="banner" style="background:var(--info-bg)">Inclusa nella fattura${f.numero?" n. "+esc(f.numero):""} del ${fmtD(f.emessa)}.</div>` : ""}
+    <div class="lbl" style="margin-bottom:6px">Per chi</div>
+    <div class="seg">${azs.map(k => `<input type="radio" name="az" id="daz-${k}" value="${k}" ${d.az===k?"checked":""}><label for="daz-${k}" style="--c:${C[k].c}"><span class="dot" style="background:${C[k].c}"></span>${esc(C[k].nome)}</label>`).join("")}</div>
+    <div class="row">
+      <div class="fld"><label for="d-tipo">Documento</label><select id="d-tipo" name="tipo">${DOC_TIPI.map(t => `<option ${d.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div>
+      <div class="fld" id="w-descr"><label for="d-descr">Quale documento</label><input id="d-descr" name="descr" value="${esc(d.descr||"")}" placeholder="Es. Piano di emergenza"></div>
+    </div>
+    <div class="fld"><label for="d-cli">Azienda cliente</label><input id="d-cli" name="cliente" value="${esc(d.cliente)}" placeholder="Per chi redigi il documento"></div>
+    <div class="lbl" style="margin-bottom:6px">Sopralluogo</div>
+    <div class="seg">${Object.entries(SOPR).map(([k,v]) => `<input type="radio" name="sopr" id="ds-${k}" value="${k}" ${d.sopr===k?"checked":""}><label for="ds-${k}">${v}</label>`).join("")}</div>
+    <div class="row" id="w-sopr">
+      <div class="fld"><label for="d-sd">Data sopralluogo</label><input id="d-sd" type="date" name="soprData" value="${esc(d.soprData||"")}"></div>
+      <div class="fld"><label for="d-si">Ora</label><input id="d-si" type="time" name="soprIni" value="${esc(d.soprIni||"")}"></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label for="d-comp">Compenso €</label><input id="d-comp" type="number" step="0.01" min="0" name="compenso" value="${esc(d.compenso ?? "")}" inputmode="decimal" placeholder="da concordare"></div>
+      <div class="fld" id="w-drim"><label for="d-rim">Rimborso spese €</label><input id="d-rim" type="number" step="0.01" min="0" name="rimborso" value="${esc(d.rimborso||"")}" inputmode="decimal" placeholder="da concordare"></div>
+    </div>
+    <div class="hint" id="d-hint"></div>
+    <div class="row">
+      <div class="fld"><label for="d-data">Consegna (prevista o effettiva)</label><input id="d-data" type="date" name="data" value="${esc(d.data||"")}"></div>
+    </div>
+    <div class="lbl" style="margin-bottom:6px">Stato</div>
+    <div class="seg"><input type="radio" name="stato" id="dst-l" value="lavorazione" ${d.stato!=="consegnato"?"checked":""}><label for="dst-l">In lavorazione</label><input type="radio" name="stato" id="dst-c" value="consegnato" ${d.stato==="consegnato"?"checked":""}><label for="dst-c">Consegnato</label></div>
+    <div class="hint">Il documento entra nella fattura del mese in cui lo consegni.</div>
+    <div class="fld"><label for="d-note">Note</label><textarea id="d-note" name="note">${esc(d.note||"")}</textarea></div>
+    <div class="mfoot">${isNew ? "" : `<button type="button" class="btn danger" id="d-del">Elimina</button>`}<div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button></div></form>`,
+  (m, close) => {
+    const form = m.querySelector("form"), g = n => form.elements[n];
+    let compManual = !isNew;
+    const refresh = () => {
+      const az = form.querySelector("[name=az]:checked").value, sopr = form.querySelector("[name=sopr]:checked").value;
+      const def = defComp(az, sopr);
+      if (!compManual) g("compenso").value = def ?? "";
+      m.querySelector("#w-descr").style.display = g("tipo").value === "Altro documento" ? "" : "none";
+      m.querySelector("#w-sopr").style.display = sopr === "no" ? "none" : "";
+      m.querySelector("#w-drim").style.display = sopr === "fuori" ? "" : "none";
+      m.querySelector("#d-hint").textContent = sopr === "fuori" ? `Sopralluogo fuori Roma: compenso del documento e dell'attività da concordare con ${C[az].nome}.`
+        : def == null ? `Compenso da concordare con ${C[az].nome}: inseriscilo quando lo sai.`
+        : `Compenso previsto con ${C[az].nome}: ${eur(def)}.`;
+    };
+    form.addEventListener("change", e => { if (e.target.name === "az" || e.target.name === "sopr") compManual = false; refresh(); });
+    g("compenso").addEventListener("input", () => { compManual = true; });
+    refresh();
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const v = fd(form);
+      const body = {k:"doc", az:v.az, tipo:v.tipo, descr: v.tipo === "Altro documento" ? v.descr : "", cliente:v.cliente, sopr:v.sopr,
+        soprData: v.sopr === "no" ? "" : v.soprData, soprIni: v.sopr === "no" ? "" : v.soprIni,
+        compenso: v.compenso === "" ? null : num(v.compenso), rimborso: v.sopr === "fuori" ? num(v.rimborso) : 0,
+        data: v.data || (v.stato === "consegnato" ? today() : ""), stato:v.stato, note:v.note, fat: d.fat || null};
+      save(d.id, body); close(); toast(isNew ? "Attività documentale salvata" : "Attività aggiornata");
+    });
+    if (!isNew) armDelete(m.querySelector("#d-del"), () => {
+      if (d.fat){ const f2 = items.get(d.fat); if (f2) patch(f2.id, {lez:(f2.lez||[]).filter(x => x !== d.id)}); }
+      del(d.id); close(); toast("Attività eliminata");
+    });
+  });
+}
+
 function fatModal(az, ids, existing){
   const C = cfg(), a = C[az];
   const ls = ids.map(i => items.get(i)).filter(Boolean).sort(sortLez);
@@ -864,7 +988,7 @@ function fatModal(az, ids, existing){
   const em = existing ? existing.emessa : today();
   const gg = a.gg;
   openModal(`<form><h2>${existing?"Fattura":"Registra fattura"} · ${esc(a.full)}</h2>
-    <div class="small muted" style="margin-bottom:10px">${ls.map(l => `${fmtD(l.data)} · ${esc(l.titolo||"Docenza")} · ${oreF(l.ore)}`).join("<br>")||"Nessuna docenza collegata"}</div>
+    <div class="small muted" style="margin-bottom:10px">${ls.map(l => l.k === "doc" ? `${fmtD(l.data)} · ${esc(docLabel(l))} · ${eur(lezImporto(l))}` : `${fmtD(l.data)} · ${esc(l.titolo||"Docenza")} · ${oreF(l.ore)}`).join("<br>")||"Nessuna attività collegata"}</div>
     <div class="row">
       <div class="fld"><label for="f-num">Numero fattura</label><input id="f-num" name="numero" value="${esc(existing?existing.numero:"")}"></div>
       <div class="fld"><label for="f-em">Data emissione</label><input id="f-em" type="date" name="emessa" value="${esc(em)}" required></div>
@@ -888,8 +1012,8 @@ function fatModal(az, ids, existing){
     });
     if (existing) armDelete(m.querySelector("#f-del"), async () => {
       close();
-      await seq(lez().filter(l => l.fat === existing.id), l => patch(l.id, {fat:null}));
-      del(existing.id); toast("Fattura eliminata: le docenze tornano da fatturare");
+      await seq([...lez(), ...docs()].filter(l => l.fat === existing.id), l => patch(l.id, {fat:null}));
+      del(existing.id); toast("Fattura eliminata: le attività tornano da fatturare");
     });
   });
 }
@@ -1149,10 +1273,12 @@ function settingsModal(){
       <div style="font-weight:700;margin-bottom:8px">${esc(C[k].full)}</div>
       <div class="row">
         <div class="fld"><label for="s-${k}-t">€/h online</label><input id="s-${k}-t" type="number" step="0.5" name="${k}.tariffa" value="${esc(C[k].tariffa)}"></div>
-        <div class="fld"><label for="s-${k}-p">€/h in presenza</label><input id="s-${k}-p" type="number" step="0.5" name="${k}.tariffaPres" value="${esc(C[k].tariffaPres)}"></div>
+        <div class="fld"><label for="s-${k}-p">€/h presenza Roma</label><input id="s-${k}-p" type="number" step="0.5" name="${k}.tariffaPres" value="${esc(C[k].tariffaPres)}"></div>
+        <div class="fld"><label for="s-${k}-fu">€/h fuori Roma</label><input id="s-${k}-fu" type="number" step="0.5" name="${k}.tariffaFuori" value="${esc(C[k].tariffaFuori ?? C[k].tariffaPres)}"></div>
         <div class="fld"><label for="s-${k}-g">Paga a (giorni)</label><input id="s-${k}-g" type="number" name="${k}.gg" value="${esc(C[k].gg ?? "")}" placeholder="non noto"></div>
       </div>
-      <div class="fld"><label for="s-${k}-f">Fatturazione</label><select id="s-${k}-f" name="${k}.fatt"><option value="mensile" ${C[k].fatt==="mensile"?"selected":""}>Mensile (fattura unica a fine mese)</option><option value="docenza" ${C[k].fatt==="docenza"?"selected":""}>A ogni docenza</option></select></div>
+      ${C[k].docs ? `<div class="row"><div class="fld"><label for="s-${k}-ds">DVR senza sopralluogo €</label><input id="s-${k}-ds" type="number" step="1" name="${k}.docSenza" value="${esc(C[k].docSenza ?? "")}" placeholder="da concordare"></div><div class="fld"><label for="s-${k}-dr">DVR con sopralluogo Roma €</label><input id="s-${k}-dr" type="number" step="1" name="${k}.docRoma" value="${esc(C[k].docRoma ?? "")}" placeholder="da concordare"></div></div>` : ""}
+      <div class="fld"><label for="s-${k}-f">Fatturazione</label><select id="s-${k}-f" name="${k}.fatt"><option value="mensile" ${C[k].fatt==="mensile"?"selected":""}>Mensile (fattura unica a fine mese)</option><option value="docenza" ${C[k].fatt==="docenza"?"selected":""}>A ogni attività</option></select></div>
     </div>`).join("")}
     <div class="small muted" style="margin:6px 0">${auth && auth.currentUser ? "Accesso come " + esc(auth.currentUser.email) : ""}</div>
     <div class="mfoot">${auth && auth.currentUser ? `<button type="button" class="btn" id="s-out">Esci</button>` : ""}<div class="spacer"></div><button type="button" class="btn" data-close>Annulla</button><button class="btn primary">Salva</button></div></form>`,
@@ -1160,7 +1286,9 @@ function settingsModal(){
     const out = m.querySelector("#s-out"); if (out) out.addEventListener("click", () => { close(); signOut(auth); });
     m.querySelector("form").addEventListener("submit", e => {
       e.preventDefault(); const v = fd(e.target); const az = {};
-      FATT_AZ.forEach(k => { az[k] = {tariffa:num(v[k+".tariffa"]), tariffaPres:num(v[k+".tariffaPres"]), gg: v[k+".gg"]==="" ? null : num(v[k+".gg"]), fatt:v[k+".fatt"]}; });
+      const nn = x => (x == null || x === "") ? null : num(x);
+      FATT_AZ.forEach(k => { az[k] = {tariffa:num(v[k+".tariffa"]), tariffaPres:num(v[k+".tariffaPres"]), tariffaFuori:num(v[k+".tariffaFuori"]), gg: nn(v[k+".gg"]), fatt:v[k+".fatt"]};
+        if (k+".docSenza" in v){ az[k].docSenza = nn(v[k+".docSenza"]); az[k].docRoma = nn(v[k+".docRoma"]); } });
       save("settings", {k:"cfg", az}); close(); toast("Impostazioni salvate");
     });
   });
@@ -1174,9 +1302,11 @@ function copyText(txt){
 }
 function riepilogo(az){
   const C = cfg(), a = C[az];
-  const ls = lez().filter(l => !l.opz && l.az === az && ym(l.data) === ui.fattMonth).sort(sortLez);
-  const rows = ls.map(l => `${fmtD(l.data)} · ${l.titolo||"Docenza"}${l.cliente?" ("+l.cliente+")":""} · ${l.mod==="presenza"?(l.sede||"in presenza"):"online"} · ${oreF(l.ore)} × ${eur(l.tariffa)} = ${eur(lezImporto(l))}`);
-  return `${a.full} · Riepilogo docenze ${meseNome(ui.fattMonth)}\n\n${rows.join("\n")}\n\nTotale: ${oreF(ls.reduce((s,l)=>s+num(l.ore),0))} · ${eur(ls.reduce((s,l)=>s+lezImporto(l),0))}`;
+  const ls = voci().filter(l => l.az === az && ym(l.data) === ui.fattMonth).sort(sortLez);
+  const rows = ls.map(l => l.k === "doc"
+    ? `${fmtD(l.data)} · ${docTipo(l)}${l.cliente?" ("+l.cliente+")":""} · ${SOPR[l.sopr||"no"].toLowerCase()} · ${eur(l.compenso)}${num(l.rimborso)?" + rimborso spese "+eur(l.rimborso):""}`
+    : `${fmtD(l.data)} · ${l.titolo||"Docenza"}${l.cliente?" ("+l.cliente+")":""} · ${modLabel(l).toLowerCase()} · ${oreF(l.ore)} × ${eur(l.tariffa)}${num(l.rimborso)?" + rimborso spese "+eur(l.rimborso):""} = ${eur(lezImporto(l))}`);
+  return `${a.full} · Riepilogo attività ${meseNome(ui.fattMonth)}\n\n${rows.join("\n")}\n\nTotale: ${oreF(ls.reduce((s,l)=>s+num(l.ore),0))} · ${eur(ls.reduce((s,l)=>s+lezImporto(l),0))}`;
 }
 
 /* ---------- eventi ---------- */
@@ -1199,6 +1329,9 @@ document.addEventListener("click", e => {
     case "newlez": lezModal({data: el.dataset.d || ui.selDay}); break;
     case "editlez": { const l = items.get(id); if (l) lezModal({...l}); break; }
     case "confopz": confermaOpz(id); break;
+    case "newdoc": docModal({az: el.dataset.az || "studioeffe"}); break;
+    case "editdoc": { const d = items.get(id); if (d) docModal({...d}); break; }
+    case "docok": { const d = items.get(id); if (d){ patch(id, {stato:"consegnato", data: d.data && d.data <= today() ? d.data : today()}); toast(num(d.compenso) ? "Documento consegnato: entra nella fattura del mese" : "Documento consegnato: ricordati di indicare il compenso"); } break; }
     case "delopz": del(id); toast("Data liberata"); break;
     case "fprev": ui.fattMonth = addMonths(ui.fattMonth,-1); render(); break;
     case "fnext": ui.fattMonth = addMonths(ui.fattMonth, 1); render(); break;
