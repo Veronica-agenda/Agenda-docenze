@@ -263,7 +263,7 @@ const AZ_BASE = {
 };
 const AZ_KEYS = ["scilla","bioinvent","cmb","studioeffe","papa"];
 const FATT_AZ = ["scilla","bioinvent","cmb","studioeffe"];
-const TITOLI_BASE = ["Formazione lavoratori - parte generale","Formazione specifica - rischio basso","Formazione specifica - rischio medio","Formazione specifica - rischio alto","RLS","Aggiornamento RLS","Preposti","Aggiornamento preposti","Datore di lavoro","RSPP datore di lavoro"];
+const TITOLI_BASE = ["Formazione lavoratori - parte generale","Formazione specifica - rischio basso","Formazione specifica - rischio medio","Formazione specifica - rischio alto","Aggiornamento lavoratori","RLS","Aggiornamento RLS","Preposti","Aggiornamento preposti","Datore di lavoro","RSPP datore di lavoro"];
 const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GGS = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
 const GGL = ["lunedì","martedì","mercoledì","giovedì","venerdì","sabato","domenica"];
@@ -295,6 +295,7 @@ const eur = n => EUR.format(n || 0);
 const oreF = n => (Math.round((n||0)*100)/100).toLocaleString("it-IT") + " h";
 const diffH = (a,b) => { if(!a||!b) return 0; const [h1,m1]=a.split(":").map(Number), [h2,m2]=b.split(":").map(Number); return Math.max(0,(h2*60+m2-h1*60-m1)/60); };
 const num = v => { const n = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(n) ? n : 0; };
+const pausaAuto = span => span > 5;
 const plural = (n, s, p) => `${n} ${n===1?s:p}`;
 const pname = x => [x.cognome, x.nome].filter(Boolean).join(" ") || "Senza nome";
 const parseDataIt = v => { v = (v||"").trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/); if (!m) return ""; let y = +m[3]; if (y < 100) y += y > 30 ? 1900 : 2000; return `${y}-${pad(+m[2])}-${pad(+m[1])}`; };
@@ -808,7 +809,9 @@ function lezModal(src){
   const l = {az:"scilla", mod:"online", data:ui.selDay, ini:"09:00", fin:"13:00", ...src};
   const isNew = !l.id;
   if (l.tariffa == null) l.tariffa = tarFor(C[l.az], l.mod);
-  if (l.ore == null) l.ore = diffH(l.ini, l.fin);
+  const span0 = diffH(l.ini, l.fin);
+  if (l.pausa == null) l.pausa = l.ore == null ? pausaAuto(span0) : Math.abs(span0 - num(l.ore) - 1) < 0.01;
+  if (l.ore == null) l.ore = Math.max(0, span0 - (l.pausa ? 1 : 0));
   const f = l.fat && items.get(l.fat);
   const prevOpts = prev().filter(p => prevStato(p).key !== "chiuso" || p.id === l.prev);
   const ebfOpts = ebf().filter(c => c.stato === "aperto" || c.id === l.ebf);
@@ -825,8 +828,10 @@ function lezModal(src){
       <div class="fld"><label for="l-data">Data</label><input id="l-data" type="date" name="data" value="${esc(l.data)}" required></div>
       <div class="fld"><label for="l-ini">Inizio</label><input id="l-ini" type="time" name="ini" value="${esc(l.ini||"")}"></div>
       <div class="fld"><label for="l-fin">Fine</label><input id="l-fin" type="time" name="fin" value="${esc(l.fin||"")}"></div>
-      <div class="fld"><label for="l-ore">Ore</label><input id="l-ore" type="number" step="0.25" min="0" name="ore" value="${esc(l.ore)}" inputmode="decimal"></div>
+      <div class="fld"><label for="l-ore">Ore conteggiate</label><input id="l-ore" type="number" step="0.25" min="0" name="ore" value="${esc(l.ore)}" inputmode="decimal"></div>
     </div>
+    <label class="check" style="margin-bottom:2px"><input type="checkbox" name="pausa" id="l-pausa" ${l.pausa?"checked":""}> Pausa pranzo di 1 ora (non conteggiata né fatturata)</label>
+    <div class="hint" style="margin:0 0 10px">Si attiva da sola per le giornate da 6 e 8 ore; i corsi da 4 ore si conteggiano interi.</div>
     <div class="fld"><label for="l-tit">Corso</label>${corsoField("titolo", l.titolo, "l-tit")}</div>
     <div class="lbl" style="margin-bottom:6px">Modalità</div>
     <div class="seg"><input type="radio" name="mod" id="m-on" value="online" ${!isPres(l.mod)?"checked":""}><label for="m-on">Online</label><input type="radio" name="mod" id="m-pr" value="presenza" ${l.mod==="presenza"?"checked":""}><label for="m-pr">In presenza a Roma</label><input type="radio" name="mod" id="m-fu" value="fuori" ${l.mod==="fuori"?"checked":""}><label for="m-fu">In presenza fuori Roma</label></div>
@@ -850,12 +855,14 @@ function lezModal(src){
     </div></form>`,
   (m, close) => {
     const form = m.querySelector("form");
-    let tarManual = !isNew, oreManual = !isNew && Math.abs(num(l.ore) - diffH(l.ini,l.fin)) > 0.01;
+    let tarManual = !isNew, pausaManual = !isNew, oreManual = !isNew && Math.abs(num(l.ore) - (diffH(l.ini,l.fin) - (l.pausa ? 1 : 0))) > 0.01;
     const g = n => form.elements[n];
     const refresh = () => {
       const az = form.querySelector("[name=az]:checked").value, mod = form.querySelector("[name=mod]:checked").value;
       if (!tarManual) g("tariffa").value = tarFor(C[az], mod);
-      if (!oreManual) g("ore").value = diffH(g("ini").value, g("fin").value);
+      const span = diffH(g("ini").value, g("fin").value);
+      if (!pausaManual) g("pausa").checked = pausaAuto(span);
+      if (!oreManual) g("ore").value = Math.max(0, span - (g("pausa").checked ? 1 : 0));
       m.querySelector("#w-az").style.display = az === "papa" ? "none" : "";
       m.querySelector("#w-papa").style.display = az === "papa" ? "" : "none";
       m.querySelector("#w-sede").style.display = isPres(mod) ? "" : "none";
@@ -869,6 +876,7 @@ function lezModal(src){
     g("tariffa").addEventListener("input", () => { tarManual = true; refresh(); });
     g("ore").addEventListener("input", () => { oreManual = true; refresh(); });
     g("ini").addEventListener("input", () => { oreManual = false; refresh(); });
+    g("pausa").addEventListener("change", () => { pausaManual = true; oreManual = false; refresh(); });
     g("fin").addEventListener("input", () => { oreManual = false; refresh(); });
     const td = m.querySelector("#l-todoc");
     if (td) td.addEventListener("click", () => { close(); docModal({data: form.elements.data.value || today()}); });
@@ -882,7 +890,7 @@ function lezModal(src){
     refresh();
     const collect = () => {
       const v = fd(form);
-      const o = {k:"lez", az:v.az, data:v.data, ini:v.ini, fin:v.fin, ore:num(v.ore), titolo:v.titolo, mod:v.mod, sede:isPres(v.mod)?v.sede:"", rimborso: v.mod==="fuori" && v.az!=="papa" ? num(v.rimborso) : 0, note:v.note, opz: v.stato === "opz", grp: l.grp || null};
+      const o = {k:"lez", az:v.az, data:v.data, ini:v.ini, fin:v.fin, ore:num(v.ore), pausa: !!v.pausa, titolo:v.titolo, mod:v.mod, sede:isPres(v.mod)?v.sede:"", rimborso: v.mod==="fuori" && v.az!=="papa" ? num(v.rimborso) : 0, note:v.note, opz: v.stato === "opz", grp: l.grp || null};
       if (v.az === "papa"){ o.tariffa = 0; o.prev = v.prev || null; o.ebf = v.ebf || null; o.cliente = ""; }
       else { o.tariffa = num(v.tariffa); o.cliente = v.cliente; o.prev = null; o.ebf = null; }
       return o;
@@ -1377,6 +1385,18 @@ function route(){
 window.addEventListener("hashchange", route);
 route();
 
+/* ---------- correzione una tantum: pausa pranzo sulle docenze già inserite ---------- */
+let migDone = false;
+function migraPausa(){
+  if (migDone) return; migDone = true;
+  const s0 = items.get("settings");
+  if (s0 && s0.migPausa) return;
+  const tocca = lez().filter(l => !l.fat && l.ini && l.fin && l.pausa == null && pausaAuto(diffH(l.ini, l.fin)) && Math.abs(num(l.ore) - diffH(l.ini, l.fin)) < 0.01);
+  tocca.forEach(l => patch(l.id, {ore: diffH(l.ini, l.fin) - 1, pausa: true}));
+  save("settings", {...(s0 || {}), k:"cfg", migPausa:true});
+  if (tocca.length) toast(`Pausa pranzo tolta da ${plural(tocca.length,"docenza già inserita","docenze già inserite")}`);
+}
+
 /* ---------- avvio: Firebase ---------- */
 let auth = null, fs = null, unsub = null;
 const configured = firebaseConfig && firebaseConfig.apiKey && !String(firebaseConfig.apiKey).startsWith("INSERISCI");
@@ -1407,6 +1427,7 @@ else {
       mode = "cloud"; pendingWrites = snap.metadata.hasPendingWrites;
       const m = new Map(); snap.docs.forEach(d => m.set(d.id, {id:d.id, ...d.data()}));
       items = m; render();
+      if (!snap.metadata.fromCache) migraPausa();
     }, e => { toast(e && e.code === "permission-denied" ? "Accesso ai dati negato: controlla le regole di Firestore." : "Non riesco a leggere i dati. Riprova più tardi."); });
   });
 }
