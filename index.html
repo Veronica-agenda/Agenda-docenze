@@ -333,6 +333,10 @@ function cfg(){
 }
 const docs = () => byKind("doc");
 const lezImporto = l => l.k === "doc" ? num(l.compenso) + num(l.rimborso) : l.az === "papa" ? 0 : num(l.ore) * num(l.tariffa) + num(l.rimborso);
+function rivPct(){ const st = items.get("settings"); return st && st.rivalsa != null && st.rivalsa !== "" ? num(st.rivalsa) : 4; }
+const r2 = x => Math.round(x * 100) / 100;
+const rivDi = x => r2(x * rivPct() / 100);
+const conRiv = x => r2(x + rivDi(x));
 const isBill = x => x.k === "doc" ? x.stato === "consegnato" : !x.opz;
 const voci = () => [...lez().filter(l => !l.opz), ...docs().filter(d => d.stato === "consegnato")];
 const isPres = m => m === "presenza" || m === "fuori";
@@ -580,7 +584,7 @@ function renderFatt(al){
   </div>`;
   const totE = ml.reduce((s,l)=>s+lezImporto(l),0), totH = ml.reduce((s,l)=>s+num(l.ore),0);
   h += `<div class="section"><div class="tiles">
-    <div class="tile"><div class="l">Totale mese</div><div class="v num">${oreF(totH)}</div><div class="s num">${eur(totE)} da aziende · anno ${oreF(yl.reduce((s,l)=>s+num(l.ore),0))}</div></div>
+    <div class="tile"><div class="l">Totale mese</div><div class="v num">${oreF(totH)}</div><div class="s num">${eur(totE)} netto · ${eur(conRiv(totE))} con rivalsa ${rivPct().toLocaleString("it-IT")}% · anno ${oreF(yl.reduce((s,l)=>s+num(l.ore),0))}</div></div>
     ${AZ_KEYS.map(k => { const ls = ml.filter(l=>l.az===k); const hh = ls.reduce((s,l)=>s+num(l.ore),0);
       return `<div class="tile" style="--c:${C[k].c}"><div class="l">${esc(C[k].nome)}</div><div class="v num">${oreF(hh)}</div><div class="s num">${k==="papa"?"fattura per cliente":eur(ls.reduce((s,l)=>s+lezImporto(l),0))} · anno ${oreF(yl.filter(l=>l.az===k).reduce((s,l)=>s+num(l.ore),0))}</div></div>`; }).join("")}
   </div></div>`;
@@ -603,7 +607,7 @@ function renderFatt(al){
       <div class="azcard-h"><span class="dot" style="background:${a.c}"></span><h3>${esc(a.full)}</h3><span class="pill neutral">${esc(regola)}</span><div class="spacer"></div>
       ${a.docs ? `<button class="btn sm" data-act="newdoc" data-az="${az}">+ Documento</button>` : ""}
       ${bill.length && a.fatt === "mensile" ? `<button class="btn sm" data-act="copia" data-az="${az}">Copia riepilogo</button>` : ""}
-      ${a.fatt === "mensile" && open.length ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${open.map(l=>l.id).join(",")}">Registra fattura</button>` : ""}
+      ${a.fatt === "mensile" && open.length ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${open.map(l=>l.id).join(",")}">Segna fattura emessa</button>` : ""}
       </div>`;
     if (!ls.length) h += `<div class="small muted">Nessuna attività a ${esc(meseNome(M))}.</div>`;
     else {
@@ -611,21 +615,32 @@ function renderFatt(al){
       ls.forEach(l => {
         const f = l.fat && items.get(l.fat);
         if (l.k === "doc"){
-          const stD = f ? `<span class="pill ${f.pagata?"ok":"info"}">${f.pagata?"saldata":"fatturata"}${f.numero?" n. "+esc(f.numero):""}</span>`
+          const stD = f ? `<span class="pill ${f.pagata?"ok":"info"}">${f.pagata?"saldata":"emessa"}${f.numero?" n. "+esc(f.numero):""}</span>${!f.pagata && a.fatt === "docenza" ? ` <button class="btn sm" data-act="paga" data-id="${f.id}">Segna saldata</button>` : ""}`
             : l.stato !== "consegnato" ? `<span class="pill neutral">in lavorazione</span>`
             : !num(l.compenso) ? `<span class="pill warn">compenso da definire</span>`
-            : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Registra fattura</button>`
+            : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Segna fattura emessa</button>`
             : `<span class="pill warn">da fatturare</span>`;
           h += `<tr class="click" data-act="editdoc" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(docTipo(l))}<div class="small muted">${esc([l.cliente, SOPR[l.sopr||"no"], num(l.rimborso)?"rimborso "+eur(l.rimborso):""].filter(Boolean).join(" · "))}</div></td><td class="r muted">—</td><td class="r muted">—</td><td class="r num">${isBill(l)?eur(lezImporto(l)):`<span class="muted">${num(l.compenso)?eur(lezImporto(l)):"—"}</span>`}</td><td>${stD}</td></tr>`;
           return;
         }
-        const st = f ? `<span class="pill ${f.pagata?"ok":"info"}">${f.pagata?"saldata":"fatturata"}${f.numero?" n. "+esc(f.numero):""}</span>`
+        const st = f ? `<span class="pill ${f.pagata?"ok":"info"}">${f.pagata?"saldata":"emessa"}${f.numero?" n. "+esc(f.numero):""}</span>${!f.pagata && a.fatt === "docenza" ? ` <button class="btn sm" data-act="paga" data-id="${f.id}">Segna saldata</button>` : ""}`
           : l.data > t ? `<span class="pill neutral">in programma</span>`
-          : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Registra fattura</button>`
+          : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Segna fattura emessa</button>`
           : `<span class="pill warn">da fatturare</span>`;
         h += `<tr class="click" data-act="editlez" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(l.titolo||"Docenza")}<div class="small muted">${esc([l.az==="altro"?(l.ente||"ente non indicato"):"", modLabel(l), l.cliente, num(l.rimborso)?"rimborso "+eur(l.rimborso):""].filter(Boolean).join(" · "))}</div></td><td class="r num">${oreF(l.ore)}</td><td class="r num">${eur(l.tariffa)}</td><td class="r num">${eur(lezImporto(l))}</td><td>${st}</td></tr>`;
       });
-      h += `</tbody><tfoot><tr><td colspan="2">Totale</td><td class="r num">${oreF(hh)}</td><td></td><td class="r num">${eur(ee)}</td><td></td></tr></tfoot></table></div>`;
+      h += `</tbody><tfoot><tr><td colspan="2">Totale netto</td><td class="r num">${oreF(hh)}</td><td></td><td class="r num">${eur(ee)}</td><td></td></tr>
+        <tr><td colspan="4" style="font-weight:500">Rivalsa ${rivPct().toLocaleString("it-IT")}%</td><td class="r num" style="font-weight:500">${eur(rivDi(ee))}</td><td></td></tr>
+        <tr><td colspan="4">Totale fattura</td><td class="r num">${eur(conRiv(ee))}</td><td></td></tr></tfoot></table></div>`;
+      if (a.fatt === "mensile"){
+        const fids = [...new Set(ls.map(l => l.fat).filter(Boolean))].map(i => items.get(i)).filter(Boolean);
+        fids.forEach(f => {
+          const stF = f.pagata ? `<span class="pill ok">saldata il ${fmtD(f.pagata)}</span>`
+            : f.scad && f.scad < t ? `<span class="pill bad">pagamento in ritardo dal ${fmtD(f.scad)}</span>`
+            : `<span class="pill info">emessa${f.scad?" · attesa entro il "+fmtD(f.scad):""}</span>`;
+          h += `<div class="actions" style="margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--surface-2)"><span><b>Fattura${f.numero?" n. "+esc(f.numero):""}</b> del ${fmtD(f.emessa)} · <span class="num">${eur(f.importo)}</span></span>${stF}<div class="spacer" style="flex:1"></div>${f.pagata?"":`<button class="btn sm primary" data-act="paga" data-id="${f.id}">Segna saldata</button>`}<button class="btn sm" data-act="editfat" data-id="${f.id}">Modifica</button></div>`;
+        });
+      }
       if (a.fatt === "mensile" && openDone.length && openDone.length < open.length) h += `<div class="small muted" style="margin-top:6px">Alcune attività del mese sono ancora in programma: registra la fattura a fine mese.</div>`;
     }
     h += `</div>`;
@@ -636,7 +651,7 @@ function renderFatt(al){
   const shown = ui.fattShowAll ? fs : fs.filter(f => !f.pagata);
   h += `<div class="section"><div class="section-h"><h2>Fatture emesse</h2><div class="spacer"></div>
     <button class="btn sm" data-act="togglefatt">${ui.fattShowAll ? "Mostra solo da incassare" : `Mostra tutte (${fs.length})`}</button></div>`;
-  if (!shown.length) h += `<div class="empty">${fs.length ? "Tutte le fatture registrate risultano saldate." : "Nessuna fattura registrata. Quando emetti una fattura, premi «Registra fattura» sull'azienda: qui vedrai scadenza e incasso."}</div>`;
+  if (!shown.length) h += `<div class="empty">${fs.length ? "Tutte le fatture registrate risultano saldate." : "Nessuna fattura registrata. Quando emetti una fattura, premi «Segna fattura emessa» sull'azienda: qui vedrai scadenza e incasso."}</div>`;
   else {
     h += `<div class="card tbl-wrap"><table><thead><tr><th>Azienda</th><th>N.</th><th>Emessa</th><th class="r">Importo</th><th>Pagamento</th><th></th></tr></thead><tbody>`;
     shown.forEach(f => {
@@ -1003,16 +1018,22 @@ function docModal(src){
 function fatModal(az, ids, existing){
   const C = cfg(), a = C[az];
   const ls = ids.map(i => items.get(i)).filter(Boolean).sort(sortLez);
-  const imp = existing ? existing.importo : ls.reduce((s,l)=>s+lezImporto(l),0);
+  const netto = existing ? (existing.imponibile ?? existing.importo) : r2(ls.reduce((s,l)=>s+lezImporto(l),0));
+  const pct = existing ? (existing.rivalsa ?? 0) : rivPct();
   const em = existing ? existing.emessa : today();
   const gg = a.gg;
-  openModal(`<form><h2>${existing?"Fattura":"Registra fattura"} · ${esc(az==="altro" ? ((ls[0]&&ls[0].ente) || (existing&&existing.ente) || a.full) : a.full)}</h2>
+  openModal(`<form><h2>${existing?"Fattura":"Fattura emessa"} · ${esc(az==="altro" ? ((ls[0]&&ls[0].ente) || (existing&&existing.ente) || a.full) : a.full)}</h2>
     <div class="small muted" style="margin-bottom:10px">${ls.map(l => l.k === "doc" ? `${fmtD(l.data)} · ${esc(docLabel(l))} · ${eur(lezImporto(l))}` : `${fmtD(l.data)} · ${esc(l.titolo||"Docenza")} · ${oreF(l.ore)}`).join("<br>")||"Nessuna attività collegata"}</div>
     <div class="row">
       <div class="fld"><label for="f-num">Numero fattura</label><input id="f-num" name="numero" value="${esc(existing?existing.numero:"")}"></div>
       <div class="fld"><label for="f-em">Data emissione</label><input id="f-em" type="date" name="emessa" value="${esc(em)}" required></div>
-      <div class="fld"><label for="f-imp">Importo €</label><input id="f-imp" type="number" step="0.01" name="importo" value="${esc(Math.round(imp*100)/100)}" inputmode="decimal"></div>
     </div>
+    <div class="row">
+      <div class="fld"><label for="f-net">Imponibile (netto) €</label><input id="f-net" type="number" step="0.01" name="imponibile" value="${esc(r2(netto))}" inputmode="decimal"></div>
+      <div class="fld"><label for="f-riv">Rivalsa %</label><input id="f-riv" type="number" step="0.5" name="rivalsa" value="${esc(pct)}" inputmode="decimal"></div>
+      <div class="fld"><label for="f-imp">Totale fattura €</label><input id="f-imp" type="number" step="0.01" name="importo" value="${esc(existing ? existing.importo : r2(netto * (1 + pct/100)))}" inputmode="decimal"></div>
+    </div>
+    <div class="hint" id="f-rivh"></div>
     <div class="fld"><label for="f-sc">Pagamento atteso entro</label><input id="f-sc" type="date" name="scad" value="${esc(existing ? (existing.scad||"") : (gg!=null ? addDays(em, gg) : ""))}"></div>
     <div class="hint">${gg!=null?`${esc(a.full)} paga di solito a ${gg} giorni dall'emissione.`:"Termini di pagamento non impostati: puoi indicare una data o lasciarla vuota."}</div>
     ${existing?`<div class="fld"><label for="f-pag">Saldata il</label><input id="f-pag" type="date" name="pagata" value="${esc(existing.pagata||"")}"></div>`:""}
@@ -1020,14 +1041,19 @@ function fatModal(az, ids, existing){
   (m, close) => {
     const form = m.querySelector("form");
     form.elements.emessa.addEventListener("change", () => { if (gg != null) form.elements.scad.value = addDays(form.elements.emessa.value, gg); });
+    const ricalcola = () => { const n = num(form.elements.imponibile.value), p = num(form.elements.rivalsa.value); form.elements.importo.value = r2(n * (1 + p/100)); showRiv(); };
+    const showRiv = () => { const n = num(form.elements.imponibile.value), p = num(form.elements.rivalsa.value); m.querySelector("#f-rivh").textContent = `${eur(n)} + rivalsa ${p.toLocaleString("it-IT")}% ${eur(r2(n*p/100))} = ${eur(r2(n*(1+p/100)))}`; };
+    form.elements.imponibile.addEventListener("input", ricalcola);
+    form.elements.rivalsa.addEventListener("input", ricalcola);
+    showRiv();
     form.addEventListener("submit", async e => {
       e.preventDefault();
       const v = fd(form);
-      const body = {k:"fat", az, ente: az === "altro" ? ((ls[0] && ls[0].ente) || (existing && existing.ente) || "") : "", mese: ls.length ? ym(ls[ls.length-1].data) : (existing && existing.mese) || null, lez: ids, numero:v.numero, emessa:v.emessa, importo:num(v.importo), ore: ls.reduce((s,l)=>s+num(l.ore),0), scad:v.scad||null, pagata: existing ? (v.pagata||null) : null};
+      const body = {k:"fat", az, ente: az === "altro" ? ((ls[0] && ls[0].ente) || (existing && existing.ente) || "") : "", mese: ls.length ? ym(ls[ls.length-1].data) : (existing && existing.mese) || null, lez: ids, numero:v.numero, emessa:v.emessa, imponibile:num(v.imponibile), rivalsa:num(v.rivalsa), importo:num(v.importo), ore: ls.reduce((s,l)=>s+num(l.ore),0), scad:v.scad||null, pagata: existing ? (v.pagata||null) : null};
       close();
       const id = await save(existing && existing.id, body);
       if (!existing) await seq(ls, l => patch(l.id, {fat:id}));
-      toast(existing ? "Fattura aggiornata" : "Fattura registrata");
+      toast(existing ? "Fattura aggiornata" : "Fattura segnata come emessa");
     });
     if (existing) armDelete(m.querySelector("#f-del"), async () => {
       close();
@@ -1287,6 +1313,7 @@ function ebfModal(c){
 function settingsModal(){
   const C = cfg();
   openModal(`<form><h2>Tariffe e pagamenti</h2>
+    <div class="fld" style="max-width:220px"><label for="s-riv">Rivalsa in fattura %</label><input id="s-riv" type="number" step="0.5" name="rivalsa" value="${esc(rivPct())}"></div>
     <div class="hint">Valori proposti in automatico per le nuove docenze. Su ogni docenza puoi sempre cambiare la tariffa (es. trasferte fuori Roma).</div>
     ${FATT_AZ.filter(k => k !== "altro").map(k => `<div class="card" style="margin-bottom:10px;border-left:4px solid ${C[k].c}">
       <div style="font-weight:700;margin-bottom:8px">${esc(C[k].full)}</div>
@@ -1308,7 +1335,7 @@ function settingsModal(){
       const nn = x => (x == null || x === "") ? null : num(x);
       FATT_AZ.filter(k => k !== "altro").forEach(k => { az[k] = {tariffa:num(v[k+".tariffa"]), tariffaPres:num(v[k+".tariffaPres"]), tariffaFuori:num(v[k+".tariffaFuori"]), gg: nn(v[k+".gg"]), fatt:v[k+".fatt"]};
         if (k+".docSenza" in v){ az[k].docSenza = nn(v[k+".docSenza"]); az[k].docRoma = nn(v[k+".docRoma"]); } });
-      save("settings", {k:"cfg", az}); close(); toast("Impostazioni salvate");
+      save("settings", {...(items.get("settings") || {}), k:"cfg", az, rivalsa: v.rivalsa === "" ? 4 : num(v.rivalsa)}); close(); toast("Impostazioni salvate");
     });
   });
 }
@@ -1325,7 +1352,7 @@ function riepilogo(az){
   const rows = ls.map(l => l.k === "doc"
     ? `${fmtD(l.data)} · ${docTipo(l)}${l.cliente?" ("+l.cliente+")":""} · ${SOPR[l.sopr||"no"].toLowerCase()} · ${eur(l.compenso)}${num(l.rimborso)?" + rimborso spese "+eur(l.rimborso):""}`
     : `${fmtD(l.data)} · ${l.titolo||"Docenza"}${l.cliente?" ("+l.cliente+")":""} · ${modLabel(l).toLowerCase()} · ${oreF(l.ore)} × ${eur(l.tariffa)}${num(l.rimborso)?" + rimborso spese "+eur(l.rimborso):""} = ${eur(lezImporto(l))}`);
-  return `${a.full} · Riepilogo attività ${meseNome(ui.fattMonth)}\n\n${rows.join("\n")}\n\nTotale: ${oreF(ls.reduce((s,l)=>s+num(l.ore),0))} · ${eur(ls.reduce((s,l)=>s+lezImporto(l),0))}`;
+  return `${a.full} · Riepilogo attività ${meseNome(ui.fattMonth)}\n\n${rows.join("\n")}\n\nTotale ore: ${oreF(ls.reduce((s,l)=>s+num(l.ore),0))}\nImponibile: ${eur(ls.reduce((s,l)=>s+lezImporto(l),0))}\nRivalsa ${rivPct().toLocaleString("it-IT")}%: ${eur(rivDi(ls.reduce((s,l)=>s+lezImporto(l),0)))}\nTotale fattura: ${eur(conRiv(ls.reduce((s,l)=>s+lezImporto(l),0)))}`;
 }
 
 /* ---------- eventi ---------- */
