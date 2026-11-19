@@ -19,7 +19,7 @@
 :root{
   --bg:#f3f4f7; --surface:#ffffff; --surface-2:#f8f9fb; --ink:#1a2230; --muted:#5f6b7b; --line:#dfe3ea;
   --accent:#22324a; --accent-ink:#ffffff;
-  --c-scilla:#8b4cc6; --c-bioinvent:#2e6bd3; --c-cmb:#dd7417; --c-studioeffe:#c93a6a; --c-papa:#2b9a5a;
+  --c-scilla:#8b4cc6; --c-bioinvent:#2e6bd3; --c-cmb:#dd7417; --c-studioeffe:#c93a6a; --c-altro:#138a8a; --c-papa:#2b9a5a;
   --ok:#23804a; --warn:#b77800; --bad:#c0392b; --info:#2e6bd3;
   --ok-bg:#e5f4eb; --warn-bg:#fdf1d8; --bad-bg:#fbe5e2; --info-bg:#e6eefb;
   --font-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
@@ -31,7 +31,7 @@
   :root:not([data-theme="light"]){
     --bg:#12161d; --surface:#1a2029; --surface-2:#202733; --ink:#e7ebf1; --muted:#9aa5b4; --line:#2d3644;
     --accent:#c9d6ea; --accent-ink:#12161d;
-    --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-studioeffe:#ec6f98; --c-papa:#4cc07e;
+    --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-studioeffe:#ec6f98; --c-altro:#3cc2c2; --c-papa:#4cc07e;
     --ok:#55c483; --warn:#e6ac3a; --bad:#ef6b5c; --info:#6c9ff0;
     --ok-bg:#16301f; --warn-bg:#332811; --bad-bg:#3a1c19; --info-bg:#172540;
     color-scheme: dark;
@@ -40,7 +40,7 @@
 :root[data-theme="dark"]{
   --bg:#12161d; --surface:#1a2029; --surface-2:#202733; --ink:#e7ebf1; --muted:#9aa5b4; --line:#2d3644;
   --accent:#c9d6ea; --accent-ink:#12161d;
-  --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-studioeffe:#ec6f98; --c-papa:#4cc07e;
+  --c-scilla:#b07ee6; --c-bioinvent:#6198f0; --c-cmb:#f0954a; --c-studioeffe:#ec6f98; --c-altro:#3cc2c2; --c-papa:#4cc07e;
   --ok:#55c483; --warn:#e6ac3a; --bad:#ef6b5c; --info:#6c9ff0;
   --ok-bg:#16301f; --warn-bg:#332811; --bad-bg:#3a1c19; --info-bg:#172540;
   color-scheme: dark;
@@ -259,10 +259,11 @@ const AZ_BASE = {
   bioinvent:{nome:"BioInvent", full:"BioInvent SRL",          c:"var(--c-bioinvent)", tariffa:25, tariffaPres:25, tariffaFuori:25, fatt:"mensile", gg:10},
   cmb:      {nome:"CMB",       full:"CMB Consulting",         c:"var(--c-cmb)",       tariffa:30, tariffaPres:40, tariffaFuori:40, fatt:"mensile", gg:30},
   studioeffe:{nome:"Studioeffe", full:"Studioeffe",           c:"var(--c-studioeffe)",tariffa:25, tariffaPres:30, tariffaFuori:35, fatt:"mensile", gg:30, docs:true, docSenza:150, docRoma:250},
+  altro:    {nome:"Altro ente", full:"Altri enti",            c:"var(--c-altro)",     tariffa:0, tariffaPres:0, tariffaFuori:0, fatt:"docenza", gg:null},
   papa:     {nome:"Con papà",  full:"Clienti con papà",       c:"var(--c-papa)",      tariffa:0,  tariffaPres:0,  fatt:"preventivo",gg:null}
 };
-const AZ_KEYS = ["scilla","bioinvent","cmb","studioeffe","papa"];
-const FATT_AZ = ["scilla","bioinvent","cmb","studioeffe"];
+const AZ_KEYS = ["scilla","bioinvent","cmb","studioeffe","altro","papa"];
+const FATT_AZ = ["scilla","bioinvent","cmb","studioeffe","altro"];
 const TITOLI_BASE = ["Formazione lavoratori - parte generale","Formazione specifica - rischio basso","Formazione specifica - rischio medio","Formazione specifica - rischio alto","Aggiornamento lavoratori","RLS","Aggiornamento RLS","Preposti","Aggiornamento preposti","Datore di lavoro","RSPP datore di lavoro"];
 const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GGS = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
@@ -340,6 +341,9 @@ const tarFor = (a, mod) => mod === "fuori" ? (a.tariffaFuori ?? a.tariffaPres) :
 const DOC_TIPI = ["DVR","Aggiornamento DVR","Altro documento"];
 const SOPR = {no:"Senza sopralluogo", roma:"Sopralluogo a Roma", fuori:"Sopralluogo fuori Roma"};
 const docTipo = d => d.tipo === "Altro documento" ? (d.descr || "Documento") : (d.tipo || "DVR");
+const azNome = (x, C) => x.az === "altro" ? (x.ente || "Altro ente") : (C[x.az] || C.scilla).nome;
+const azFull = (x, C) => x.az === "altro" ? (x.ente || "Altro ente") : (C[x.az] || C.scilla).full;
+const enti = () => [...new Set([...lez().map(l => l.ente), ...fat().map(f => f.ente)].filter(Boolean))].sort();
 const docLabel = d => docTipo(d) + (d.cliente ? " · " + d.cliente : "");
 const sortLez = (a,b) => (a.data+(a.ini||"")).localeCompare(b.data+(b.ini||""));
 
@@ -384,9 +388,12 @@ function alerts(){
   }
   for (const az of FATT_AZ.filter(a => C[a].fatt === "docenza")){
     voci().filter(l => l.az === az && !l.fat && l.data <= t).sort(sortLez).forEach(l => {
-      out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${C[az].full} per ${l.k==="doc" ? docTipo(l) + " consegnato il" : "la docenza del"} ${fmtD(l.data)}`, s:`${l.k==="doc" ? (l.cliente||"Documento") : (l.titolo||"Docenza") + " · " + oreF(l.ore)} · ${eur(lezImporto(l))}`, mese:ym(l.data)});
+      out.push({tab:"fatture", lvl:"warn", t:`Emetti la fattura ${azFull(l, C)} per ${l.k==="doc" ? docTipo(l) + " consegnato il" : "la docenza del"} ${fmtD(l.data)}`, s:`${l.k==="doc" ? (l.cliente||"Documento") : (l.titolo||"Docenza") + " · " + oreF(l.ore)} · ${eur(lezImporto(l))}`, mese:ym(l.data)});
     });
   }
+  lez().filter(l => l.az === "altro" && !l.opz && !l.fat && !num(l.tariffa)).forEach(l => {
+    out.push({tab:"fatture", lvl:"warn", t:`Indica la tariffa concordata con ${l.ente||"l'ente"}`, s:`${l.titolo||"Docenza"} del ${fmtD(l.data)}`, mese:ym(l.data)});
+  });
   docs().filter(d => d.stato === "consegnato" && !d.fat && !num(d.compenso)).forEach(d => {
     out.push({tab:"fatture", lvl:"warn", t:`Indica il compenso concordato: ${docLabel(d)}`, s:`${(C[d.az]||C.scilla).full} · consegnato il ${fmtD(d.data)}`, mese:ym(d.data)});
   });
@@ -394,7 +401,7 @@ function alerts(){
     out.push({tab:"fatture", lvl:"info", t:`Documento oltre la data prevista: ${docLabel(d)}`, s:`${(C[d.az]||C.scilla).full} · previsto il ${fmtD(d.data)} · segnalo come consegnato quando lo invii`});
   });
   fat().filter(f => !f.pagata && f.scad).forEach(f => {
-    const d = daysBetween(t, f.scad), n = C[f.az] ? C[f.az].full : "";
+    const d = daysBetween(t, f.scad), n = f.az === "altro" ? (f.ente || "") : C[f.az] ? C[f.az].full : "";
     if (d < 0) out.push({tab:"fatture", lvl:"bad", t:`Pagamento in ritardo: fattura ${f.numero?("n. "+f.numero+" "):""}${n}`, s:`${eur(f.importo)} · scaduta il ${fmtD(f.scad)} (${plural(-d,"giorno","giorni")} fa)`});
     else if (d <= 5) out.push({tab:"fatture", lvl:"info", t:`Pagamento atteso: fattura ${f.numero?("n. "+f.numero+" "):""}${n}`, s:`${eur(f.importo)} · entro il ${fmtD(f.scad)}`});
   });
@@ -456,7 +463,7 @@ function lezRow(l, opts={}){
   return `<button class="lrow ${l.opz?"opz":""}" style="--c:${a.c}" data-act="editlez" data-id="${l.id}">
     <span class="bar"></span>
     <span class="b"><span class="tt">${esc(l.titolo || "Docenza")}</span><span class="meta">${opts.date?esc(fmtDshort(l.data))+" · ":""}${esc(meta)}</span></span>
-    <span class="r"><div style="font-weight:600">${esc(a.nome)}</div>${l.az!=="papa"?`<div class="muted num">${eur(lezImporto(l))}</div>`:""}${l.fat?`<span class="pill ok">fatturata</span>`:""}${l.opz?`<span class="pill warn">opzionata</span>`:""}</span>
+    <span class="r"><div style="font-weight:600">${esc(azNome(l, C))}</div>${l.az!=="papa"?`<div class="muted num">${eur(lezImporto(l))}</div>`:""}${l.fat?`<span class="pill ok">fatturata</span>`:""}${l.opz?`<span class="pill warn">opzionata</span>`:""}</span>
   </button>`;
 }
 
@@ -543,7 +550,7 @@ function opzHtml(){
     const a = C[ls[0].az] || C.scilla;
     return `<div class="card" style="border:1px dashed ${a.c};padding:10px 12px">
       <div style="font-weight:600"><span class="dot" style="background:${a.c}"></span> ${esc(ls[0].titolo||"Docenza")}</div>
-      <div class="small muted">${esc(a.nome)}${ls[0].cliente?" · "+esc(ls[0].cliente):""} · in attesa di risposta</div>
+      <div class="small muted">${esc(azNome(ls[0], C))}${ls[0].cliente?" · "+esc(ls[0].cliente):""} · in attesa di risposta</div>
       ${ls.map(l => `<div class="opzrow"><span class="d num">${esc(fmtDshort(l.data))}${l.ini?" · "+esc(l.ini)+"–"+esc(l.fin||""):""}</span>
         <button class="btn sm primary" data-act="confopz" data-id="${l.id}">Conferma</button><button class="btn sm" data-act="editlez" data-id="${l.id}">Apri</button><button class="btn sm danger" data-act="delopz" data-id="${l.id}" aria-label="Libera questa data">Libera</button></div>`).join("")}
     </div>`;
@@ -616,7 +623,7 @@ function renderFatt(al){
           : l.data > t ? `<span class="pill neutral">in programma</span>`
           : a.fatt === "docenza" ? `<button class="btn sm primary" data-act="newfat" data-az="${az}" data-ids="${l.id}">Registra fattura</button>`
           : `<span class="pill warn">da fatturare</span>`;
-        h += `<tr class="click" data-act="editlez" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(l.titolo||"Docenza")}<div class="small muted">${esc([modLabel(l), l.cliente, num(l.rimborso)?"rimborso "+eur(l.rimborso):""].filter(Boolean).join(" · "))}</div></td><td class="r num">${oreF(l.ore)}</td><td class="r num">${eur(l.tariffa)}</td><td class="r num">${eur(lezImporto(l))}</td><td>${st}</td></tr>`;
+        h += `<tr class="click" data-act="editlez" data-id="${l.id}"><td class="num">${esc(fmtDshort(l.data))}</td><td>${esc(l.titolo||"Docenza")}<div class="small muted">${esc([l.az==="altro"?(l.ente||"ente non indicato"):"", modLabel(l), l.cliente, num(l.rimborso)?"rimborso "+eur(l.rimborso):""].filter(Boolean).join(" · "))}</div></td><td class="r num">${oreF(l.ore)}</td><td class="r num">${eur(l.tariffa)}</td><td class="r num">${eur(lezImporto(l))}</td><td>${st}</td></tr>`;
       });
       h += `</tbody><tfoot><tr><td colspan="2">Totale</td><td class="r num">${oreF(hh)}</td><td></td><td class="r num">${eur(ee)}</td><td></td></tr></tfoot></table></div>`;
       if (a.fatt === "mensile" && openDone.length && openDone.length < open.length) h += `<div class="small muted" style="margin-top:6px">Alcune attività del mese sono ancora in programma: registra la fattura a fine mese.</div>`;
@@ -638,7 +645,7 @@ function renderFatt(al){
       if (f.pagata) st = `<span class="pill ok">saldata il ${fmtD(f.pagata)}</span>`;
       else if (f.scad){ const d = daysBetween(t, f.scad); st = d < 0 ? `<span class="pill bad">scaduta il ${fmtD(f.scad)}</span>` : `<span class="pill ${d<=5?"warn":"neutral"}">attesa entro il ${fmtD(f.scad)}</span>`; }
       else st = `<span class="pill neutral">in attesa</span>`;
-      h += `<tr><td><span class="dot" style="background:${a.c}"></span> ${esc(a.nome)}<div class="small muted">${esc(f.mese ? meseNome(f.mese) : "")} · ${plural((f.lez||[]).length,"attività","attività")}</div></td><td>${esc(f.numero||"—")}</td><td class="num">${fmtD(f.emessa)}</td><td class="r num">${eur(f.importo)}</td><td>${st}</td>
+      h += `<tr><td><span class="dot" style="background:${a.c}"></span> ${esc(f.az==="altro" ? (f.ente||a.nome) : a.nome)}<div class="small muted">${esc(f.mese ? meseNome(f.mese) : "")} · ${plural((f.lez||[]).length,"attività","attività")}</div></td><td>${esc(f.numero||"—")}</td><td class="num">${fmtD(f.emessa)}</td><td class="r num">${eur(f.importo)}</td><td>${st}</td>
         <td class="r"><div class="actions" style="justify-content:flex-end">${f.pagata?"":`<button class="btn sm primary" data-act="paga" data-id="${f.id}">Segna saldata</button>`}<button class="btn sm" data-act="editfat" data-id="${f.id}">Modifica</button></div></td></tr>`;
     });
     h += `</tbody></table></div>`;
@@ -836,6 +843,7 @@ function lezModal(src){
     <div class="lbl" style="margin-bottom:6px">Modalità</div>
     <div class="seg"><input type="radio" name="mod" id="m-on" value="online" ${!isPres(l.mod)?"checked":""}><label for="m-on">Online</label><input type="radio" name="mod" id="m-pr" value="presenza" ${l.mod==="presenza"?"checked":""}><label for="m-pr">In presenza a Roma</label><input type="radio" name="mod" id="m-fu" value="fuori" ${l.mod==="fuori"?"checked":""}><label for="m-fu">In presenza fuori Roma</label></div>
     <div class="fld" id="w-sede"><label for="l-sede">Sede</label><input id="l-sede" name="sede" value="${esc(l.sede||"")}" placeholder="Es. Passo Corese">${sedeChips("l-sede")}</div>
+    <div class="fld" id="w-ente"><label for="l-ente">Nome dell'ente</label><input id="l-ente" name="ente" value="${esc(l.ente||"")}" placeholder="Es. Sicurezza Lavoro srl"><div class="sede-chips">${enti().map(x => `<button type="button" class="btn sm" data-sede="${esc(x)}" data-for="l-ente">${esc(x)}</button>`).join("")}</div></div>
     <div class="row" id="w-az">
       <div class="fld"><label for="l-tar">Tariffa €/ora</label><input id="l-tar" type="number" step="0.5" min="0" name="tariffa" value="${esc(l.tariffa)}" inputmode="decimal"></div>
       <div class="fld" id="w-rim"><label for="l-rim">Rimborso spese €</label><input id="l-rim" type="number" step="0.01" min="0" name="rimborso" value="${esc(l.rimborso||"")}" inputmode="decimal" placeholder="da concordare"></div>
@@ -864,13 +872,14 @@ function lezModal(src){
       if (!pausaManual) g("pausa").checked = pausaAuto(span);
       if (!oreManual) g("ore").value = Math.max(0, span - (g("pausa").checked ? 1 : 0));
       m.querySelector("#w-az").style.display = az === "papa" ? "none" : "";
+      m.querySelector("#w-ente").style.display = az === "altro" ? "" : "none";
       m.querySelector("#w-papa").style.display = az === "papa" ? "" : "none";
       m.querySelector("#w-sede").style.display = isPres(mod) ? "" : "none";
       m.querySelector("#w-rim").style.display = mod === "fuori" ? "" : "none";
       const opz = form.querySelector("[name=stato]:checked").value === "opz";
       m.querySelector("#w-opzhint").style.display = opz ? "" : "none";
       const wa = m.querySelector("#w-altre"); if (wa) wa.style.display = opz ? "" : "none";
-      m.querySelector("#w-imp").textContent = az === "papa" ? "Le docenze con papà si fatturano per cliente nella scheda Papà: qui conto solo le ore." : `Importo: ${eur(num(g("ore").value)*num(g("tariffa").value) + (mod === "fuori" ? num(g("rimborso").value) : 0))}${mod === "fuori" ? " · fuori Roma tariffa e rimborsi si concordano di volta in volta: controlla i valori" : ""}`;
+      m.querySelector("#w-imp").textContent = az === "papa" ? "Le docenze con papà si fatturano per cliente nella scheda Papà: qui conto solo le ore." : (az === "altro" && !num(g("tariffa").value) ? "Scrivi la tariffa oraria concordata con l'ente. " : "") + `Importo: ${eur(num(g("ore").value)*num(g("tariffa").value) + (mod === "fuori" ? num(g("rimborso").value) : 0))}${mod === "fuori" ? " · fuori Roma tariffa e rimborsi si concordano di volta in volta: controlla i valori" : ""}`;
     };
     form.addEventListener("change", e => { if (e.target.name === "az" || e.target.name === "mod") tarManual = false; refresh(); });
     g("tariffa").addEventListener("input", () => { tarManual = true; refresh(); });
@@ -893,12 +902,14 @@ function lezModal(src){
       const o = {k:"lez", az:v.az, data:v.data, ini:v.ini, fin:v.fin, ore:num(v.ore), pausa: !!v.pausa, titolo:v.titolo, mod:v.mod, sede:isPres(v.mod)?v.sede:"", rimborso: v.mod==="fuori" && v.az!=="papa" ? num(v.rimborso) : 0, note:v.note, opz: v.stato === "opz", grp: l.grp || null};
       if (v.az === "papa"){ o.tariffa = 0; o.prev = v.prev || null; o.ebf = v.ebf || null; o.cliente = ""; }
       else { o.tariffa = num(v.tariffa); o.cliente = v.cliente; o.prev = null; o.ebf = null; }
+      o.ente = v.az === "altro" ? v.ente : "";
       return o;
     };
     form.addEventListener("submit", e => {
       e.preventDefault();
       const o = collect();
       if (!o.data){ toast("Indica la data."); return; }
+      if (o.az === "altro" && !o.ente){ toast("Scrivi il nome dell'ente."); form.elements.ente.focus(); return; }
       o.fat = l.fat || null;
       const altre = (o.opz && al) ? [...al.querySelectorAll(".altra-d")].map(i => i.value).filter(d => d && d !== o.data) : [];
       if (altre.length){
@@ -995,7 +1006,7 @@ function fatModal(az, ids, existing){
   const imp = existing ? existing.importo : ls.reduce((s,l)=>s+lezImporto(l),0);
   const em = existing ? existing.emessa : today();
   const gg = a.gg;
-  openModal(`<form><h2>${existing?"Fattura":"Registra fattura"} · ${esc(a.full)}</h2>
+  openModal(`<form><h2>${existing?"Fattura":"Registra fattura"} · ${esc(az==="altro" ? ((ls[0]&&ls[0].ente) || (existing&&existing.ente) || a.full) : a.full)}</h2>
     <div class="small muted" style="margin-bottom:10px">${ls.map(l => l.k === "doc" ? `${fmtD(l.data)} · ${esc(docLabel(l))} · ${eur(lezImporto(l))}` : `${fmtD(l.data)} · ${esc(l.titolo||"Docenza")} · ${oreF(l.ore)}`).join("<br>")||"Nessuna attività collegata"}</div>
     <div class="row">
       <div class="fld"><label for="f-num">Numero fattura</label><input id="f-num" name="numero" value="${esc(existing?existing.numero:"")}"></div>
@@ -1012,7 +1023,7 @@ function fatModal(az, ids, existing){
     form.addEventListener("submit", async e => {
       e.preventDefault();
       const v = fd(form);
-      const body = {k:"fat", az, mese: ls.length ? ym(ls[ls.length-1].data) : (existing && existing.mese) || null, lez: ids, numero:v.numero, emessa:v.emessa, importo:num(v.importo), ore: ls.reduce((s,l)=>s+num(l.ore),0), scad:v.scad||null, pagata: existing ? (v.pagata||null) : null};
+      const body = {k:"fat", az, ente: az === "altro" ? ((ls[0] && ls[0].ente) || (existing && existing.ente) || "") : "", mese: ls.length ? ym(ls[ls.length-1].data) : (existing && existing.mese) || null, lez: ids, numero:v.numero, emessa:v.emessa, importo:num(v.importo), ore: ls.reduce((s,l)=>s+num(l.ore),0), scad:v.scad||null, pagata: existing ? (v.pagata||null) : null};
       close();
       const id = await save(existing && existing.id, body);
       if (!existing) await seq(ls, l => patch(l.id, {fat:id}));
@@ -1277,7 +1288,7 @@ function settingsModal(){
   const C = cfg();
   openModal(`<form><h2>Tariffe e pagamenti</h2>
     <div class="hint">Valori proposti in automatico per le nuove docenze. Su ogni docenza puoi sempre cambiare la tariffa (es. trasferte fuori Roma).</div>
-    ${FATT_AZ.map(k => `<div class="card" style="margin-bottom:10px;border-left:4px solid ${C[k].c}">
+    ${FATT_AZ.filter(k => k !== "altro").map(k => `<div class="card" style="margin-bottom:10px;border-left:4px solid ${C[k].c}">
       <div style="font-weight:700;margin-bottom:8px">${esc(C[k].full)}</div>
       <div class="row">
         <div class="fld"><label for="s-${k}-t">€/h online</label><input id="s-${k}-t" type="number" step="0.5" name="${k}.tariffa" value="${esc(C[k].tariffa)}"></div>
@@ -1295,7 +1306,7 @@ function settingsModal(){
     m.querySelector("form").addEventListener("submit", e => {
       e.preventDefault(); const v = fd(e.target); const az = {};
       const nn = x => (x == null || x === "") ? null : num(x);
-      FATT_AZ.forEach(k => { az[k] = {tariffa:num(v[k+".tariffa"]), tariffaPres:num(v[k+".tariffaPres"]), tariffaFuori:num(v[k+".tariffaFuori"]), gg: nn(v[k+".gg"]), fatt:v[k+".fatt"]};
+      FATT_AZ.filter(k => k !== "altro").forEach(k => { az[k] = {tariffa:num(v[k+".tariffa"]), tariffaPres:num(v[k+".tariffaPres"]), tariffaFuori:num(v[k+".tariffaFuori"]), gg: nn(v[k+".gg"]), fatt:v[k+".fatt"]};
         if (k+".docSenza" in v){ az[k].docSenza = nn(v[k+".docSenza"]); az[k].docRoma = nn(v[k+".docRoma"]); } });
       save("settings", {k:"cfg", az}); close(); toast("Impostazioni salvate");
     });
